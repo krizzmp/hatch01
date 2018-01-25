@@ -1,140 +1,198 @@
 import * as React from 'react'
-import * as style from '../styles'
-import { Composer } from '../ReComposeClass'
-import { TodoType } from './App'
-
+import * as style from '../styles/styles'
+import { TodoType } from './Line'
 import Plain from 'slate-plain-serializer'
 import { Editor } from 'slate-react'
+import { HotKeys } from 'react-hotkeys'
+import { bindActionCreators } from 'redux'
+import { updateBoxSize } from '../actions'
+import * as R from 'ramda'
+import { connect } from 'react-redux'
+import { withFirebase } from 'react-redux-firebase'
+import { RemoveNote } from '../sagas'
+import { rootId } from '../utils'
 
-type TodoProps = {
+export type TodoProps = {
   todo: TodoType,
   onDragStart: (e: any, todo: TodoType) => void,
   dragging: boolean,
+  select: (id: string) => void,
+  selected: boolean,
 }
-const renderNode = (props) => {
-  const {node, attributes, children} = props
-  if (props.isSelected || node.text !== '---') {
+const renderNode = ({node, attributes, children, isSelected}) => {
+  if (isSelected || node.text !== '---') {
     return (
-      <div
-        style={{
-          paddingLeft: 4,
-          paddingRight: 4,
-        }}
-        {...attributes}
-      >
+      <style.DefaultText {...attributes}>
         {children}
-      </div>
+      </style.DefaultText>
     )
   } else {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          color: '#f0f0f0',
-          margin: 0,
-          padding: 0,
-
-        }}
-        {...attributes}
-      >
-        <div
-          style={{
-            background: 'black',
-            height: 1,
-            width: '100%',
-            top: '50%',
-            display: 'block',
-            flexAlign: 'center',
-            float: 'left',
-            position: 'absolute',
-            margin: 0,
-            padding: 0,
-          }}
-        />
+      <style.OuterDivider {...attributes}>
+        <style.InnerDivider/>
         {children}
-      </div>
+      </style.OuterDivider>
     )
   }
 }
 
-type MeProps = {
-  todo: TodoType,
+type BoxProps = {
   firebase: any,
-  onDragStart: any,
-  dragging: boolean,
+  localBox?: any,
+  actions: { updateSize: typeof updateBoxSize, RemoveNote: typeof RemoveNote }
 }
 
-class MyEditor extends React.Component<MeProps> {
+type MeProps = {
+  selected: boolean,
+  name: string,
+  id: string,
+  onClick: any,
+}
+
+class MyEditor extends React.Component<MeProps & BoxProps> {
   state = {
-    value: Plain.deserialize(this.props.todo.name),
+    value: Plain.deserialize(this.props.name),
     editing: false,
-    readonly: true,
+  }
+  handlers = {
+    'remove': (e) => {
+      if (!this.state.editing) {
+        this.props.actions.RemoveNote({id: this.props.id})
+        this.props.firebase.remove(`${rootId}/todos/${this.props.id}`)
+      }
+    },
+    'shiftie': (e) => {
+      //
+    }
   }
 
   componentWillReceiveProps(nextProps: MeProps) {
-    if (this.props.todo.name !== nextProps.todo.name && this.state.editing === false) {
-      this.setState({value: Plain.deserialize(nextProps.todo.name)})
+    if (this.props.name === nextProps.name && this.state.editing) {
+      return
     }
+    this.setState({value: Plain.deserialize(nextProps.name)})
+  }
+
+  shouldComponentUpdate(np: MeProps, ns: any) {
+    let pp = this.props
+    if (
+      np.id === pp.id &&
+      np.name === pp.name &&
+      np.selected === pp.selected &&
+      !ns.editing
+    ) {
+      return false
+    }
+    return true
+  }
+
+  onChange = ({value}) => {
+    this.setState({value})
+  }
+  onBlur = (e) => {
+    let name = Plain.serialize(this.state.value)
+    this.props.firebase.update(`${rootId}/todos/${this.props.id}`, {name})
+    this.setState({editing: false})
+  }
+  onFocus = () => {
+    this.setState({editing: true})
+  }
+
+  render() {
+    return (
+      <HotKeys handlers={this.handlers}>
+
+        <Editor
+          value={this.state.value}
+          onChange={this.onChange}
+          renderNode={renderNode}
+          onBlur={this.onBlur}
+          onFocus={this.onFocus}
+          readOnly={!this.props.selected}
+          onClick={this.props.onClick}
+          onKeyDown={(e) => e.shiftKey && e.key === 'Enter' ? false : null}
+        />
+      </HotKeys>
+    )
+  }
+}
+
+class Box extends React.Component<BoxProps & TodoProps> {
+  bs: HTMLDivElement
+
+  componentDidMount() {
+    this.updateSize()
+  }
+
+  componentDidUpdate() {
+    this.updateSize()
+  }
+
+  shouldComponentUpdate(np: BoxProps & TodoProps, ns: any) {
+    let pp = this.props
+    if (
+      np.todo.id === pp.todo.id &&
+      np.todo.name === pp.todo.name &&
+      np.todo.x === pp.todo.x &&
+      np.todo.y === pp.todo.y &&
+      np.todo.dx === pp.todo.dx &&
+      np.todo.dy === pp.todo.dy &&
+      np.dragging === pp.dragging &&
+      np.selected === pp.selected
+    ) {
+      return false
+    }
+    return true
   }
 
   render() {
     return (
       <style.Todo
         {...this.props.todo}
-        onDragStart={this.props.onDragStart}
+        onDragStart={this.onDragStart}
         draggable="true"
         data-box-id={this.props.todo.id}
         dragging={this.props.dragging}
-        selected={!this.state.readonly}
+        selected={this.props.selected}
+        innerRef={(ref) => this.bs = ref}
       >
-        <Editor
-          placeholder="Enter some plain text..."
-          value={this.state.value}
-          onChange={this.onChange}
-          renderNode={renderNode}
-          onBlur={this.onBlur}
-          onFocus={this.onFocus}
-          readOnly={this.state.readonly}
+        <MyEditor
           onClick={this.onClick}
+          selected={this.props.selected}
+          firebase={this.props.firebase}
+          name={this.props.todo.name}
+          id={this.props.todo.id}
+          actions={this.props.actions}
         />
       </style.Todo>
     )
   }
 
-  onClick = () => {
-    this.setState({readonly: false})
+  onClick = (e) => {
+    e.stopPropagation()
+    this.props.select(this.props.todo.id)
   }
-  onChange = ({value}) => {
-    this.setState({value})
+  updateSize = () => {
+    const {width, height} = this.bs.getBoundingClientRect()
+    if (
+      !R.pathEq(['localBox', 'w'], width, this.props) ||
+      !R.pathEq(['localBox', 'h'], height, this.props)
+    ) {
+      this.props.actions.updateSize({id: this.props.todo.id, h: height, w: width})
+    }
   }
-  onBlur = (e) => {
-    let name = Plain.serialize(this.state.value)
-    this.setState({readonly: true, editing: false})
-    this.props.firebase.update(`todos/${this.props.todo.id}`, {name})
 
-  }
-  onFocus = () => {
-    this.setState({editing: true})
+  onDragStart = (e) => {
+    e.preventDefault()
+    this.props.onDragStart(e, this.props.todo)
   }
 }
 
-let Todo = new Composer<TodoProps>()
-  .withFirebase()
-  .withHandler((p) => ({
-    onDragStartHandler: (e) => {
-      e.preventDefault()
-      p.onDragStart(e, p.todo)
-    }
+const enhancer = connect(
+  (s, p) => ({
+    localBox: s.local[p.todo.id]
+  }),
+  (dispatch) => ({
+    actions: bindActionCreators({updateSize: updateBoxSize, RemoveNote}, dispatch)
   }))
-  .render(({todo, onDragStartHandler, dragging, firebase}) => (
-
-    <MyEditor
-      onDragStart={onDragStartHandler}
-      dragging={dragging}
-      todo={todo}
-      firebase={firebase}
-    />
-  ))
-export default Todo
+export default withFirebase(enhancer(Box))

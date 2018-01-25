@@ -22,3 +22,7 @@ export const fbMergeToList = (fb, path: string, local, d) => {
     d
   )
 }
+
+export const rootId = 'quatasd'
+
+export const withRoot = (str: string) => rootId + '/' + str

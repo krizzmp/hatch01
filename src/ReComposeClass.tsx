@@ -19,20 +19,29 @@ export class Composer<OP = {}, OG = OP> {
       return (comp) => fn(comp)
     }
   }
+
   withFirebase(): Composer<OP & { firebase: any }, OG> {
     return new Composer<OP & { firebase: any }, OG>(
       this._Hoc(withFirebase)
     )
   }
+
   firebaseConnect(paths: string[]): Composer<OP & { firebase: any }, OG> {
     return new Composer<OP & { firebase: any }, OG>(
       this._Hoc(firebaseConnect(paths))
     )
   }
 
-  connect<P>(fn: (p: any) => P): Composer<OP & P, OG> {
+  connect<P>(matp: (s: any, p: OP) => P): Composer<OP & P, OG> {
     return new Composer<OP & P, OG>(
-      this._Hoc(connect(fn))
+      this._Hoc(connect(matp))
+    )
+  }
+
+  connect2<P, A>(matp: (s: any, p: OP) => P,
+                 mdtp: (d: any, p: OP) => A): Composer<OP & P & A, OG> {
+    return new Composer<OP & P & A, OG>(
+      this._Hoc(connect(matp, mdtp))
     )
   }
 
@@ -52,6 +61,7 @@ export class Composer<OP = {}, OG = OP> {
       this._Hoc(withStateHandlers(createProps, stateUpdaters as any))
     )
   }
+
   render(SomeComponent: SFC<OP>): SFC<OG> {
     return this.hoc(SomeComponent)
   }
