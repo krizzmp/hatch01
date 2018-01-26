@@ -1,5 +1,4 @@
 import { select, takeEvery } from 'redux-saga/effects'
-// import { removeBox } from './actions'
 import * as R from 'ramda'
 import actionCreatorFactory from 'redux-typescript-actions'
 import { rootId } from './utils'
@@ -8,8 +7,11 @@ let cuid = require('cuid')
 
 const actionCreator = actionCreatorFactory()
 
-export const RemoveNote = actionCreator<{ id: string }>('REMOVE_BOX')
+type UpdateNoteSize = { id: string, h: number, w: number }
+export const UpdateNoteSize = actionCreator<UpdateNoteSize>('UPDATE_NOTE_SIZE')
 
+type RemoveNoteProps = { id: string }
+export const RemoveNote = actionCreator<RemoveNoteProps>('REMOVE_BOX')
 function* removeNote(fb: any, action: any) {
   let boxId = action.payload.id
   let lines = yield select(R.path(['firebase', 'data', rootId, 'lines']))
@@ -21,10 +23,11 @@ function* removeNote(fb: any, action: any) {
       },
     ),
   )(lines)
+  fb().remove(`${rootId}/todos/${boxId}`)
 }
 
-export const ConnectNote = actionCreator<{ b1: string, b2: string }>('CONNECT_NOTE')
-
+type ConnectNoteProps = { b1: string, b2: string }
+export const ConnectNote = actionCreator<ConnectNoteProps>('CONNECT_NOTE')
 function* connectNote(fb: any, action: any) {
   let {b1, b2} = action.payload
   let firebase = fb()
@@ -34,9 +37,9 @@ function* connectNote(fb: any, action: any) {
 
 }
 
-export const DisConnectLine = actionCreator<{ lineId: string, noteId: string }>('DISCONNECT_NOTE')
-
-function* disConnectLine(fb: any, action: any) {
+type DisconnectLineProps = { lineId: string, noteId: string }
+export const DisconnectLine = actionCreator<DisconnectLineProps>('DISCONNECT_NOTE')
+function* disconnectLine(fb: any, action: any) {
   let {lineId, noteId} = action.payload
   let firebase = fb()
   firebase.remove(`${rootId}/lines/${lineId}`)
@@ -48,5 +51,5 @@ function* disConnectLine(fb: any, action: any) {
 export default function* helloSaga(getFirebase: () => any) {
   yield takeEvery(RemoveNote.type, removeNote, getFirebase)
   yield takeEvery(ConnectNote.type, connectNote, getFirebase)
-  yield takeEvery(DisConnectLine.type, disConnectLine, getFirebase)
+  yield takeEvery(DisconnectLine.type, disconnectLine, getFirebase)
 }

@@ -10,13 +10,13 @@ import { connect } from 'react-redux'
 import * as R from 'ramda'
 import { css } from 'emotion'
 import {
-  ConnectNote, RemoveNote, DisConnectLine
+  ConnectNote, RemoveNote, DisconnectLine
 } from '../sagas'
 import { bindActionCreators } from 'redux'
 import { rootId } from '../utils'
 
 let cuid = require('cuid')
-const Actions = {ConnectNote, RemoveNote, DisConnectLine}
+const Actions = {ConnectNote, RemoveNote, DisconnectLine}
 
 const TextFieldBox = () => (
   <div
@@ -139,7 +139,7 @@ class App extends React.PureComponent<AppProps> {
       if (keys.length === 0) {
         this.props.actions.ConnectNote({b1: b1!, b2: todo.id})
       } else {
-        this.props.actions.DisConnectLine({lineId: keys[0], noteId: todo.id})
+        this.props.actions.DisconnectLine({lineId: keys[0], noteId: todo.id})
       }
     } else {
       this.props.firebase.update(`${rootId}/todos/${todo.id}`, {

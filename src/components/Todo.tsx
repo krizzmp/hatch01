@@ -5,7 +5,7 @@ import Plain from 'slate-plain-serializer'
 import { Editor } from 'slate-react'
 import { HotKeys } from 'react-hotkeys'
 import { bindActionCreators } from 'redux'
-import { updateBoxSize } from '../actions'
+import { UpdateNoteSize } from '../sagas'
 import * as R from 'ramda'
 import { connect } from 'react-redux'
 import { withFirebase } from 'react-redux-firebase'
@@ -35,11 +35,11 @@ const renderNode = ({node, attributes, children, isSelected}) => {
     )
   }
 }
-
+const Actions = {UpdateNoteSize, RemoveNote}
 type BoxProps = {
   firebase: any,
   localBox?: any,
-  actions: { updateSize: typeof updateBoxSize, RemoveNote: typeof RemoveNote }
+  actions: typeof Actions
 }
 
 type MeProps = {
@@ -58,7 +58,6 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     'remove': (e) => {
       if (!this.state.editing) {
         this.props.actions.RemoveNote({id: this.props.id})
-        this.props.firebase.remove(`${rootId}/todos/${this.props.id}`)
       }
     },
     'shiftie': (e) => {
@@ -178,7 +177,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
       !R.pathEq(['localBox', 'w'], width, this.props) ||
       !R.pathEq(['localBox', 'h'], height, this.props)
     ) {
-      this.props.actions.updateSize({id: this.props.todo.id, h: height, w: width})
+      this.props.actions.UpdateNoteSize({id: this.props.todo.id, h: height, w: width})
     }
   }
 
@@ -193,6 +192,6 @@ const enhancer = connect(
     localBox: s.local[p.todo.id]
   }),
   (dispatch) => ({
-    actions: bindActionCreators({updateSize: updateBoxSize, RemoveNote}, dispatch)
+    actions: bindActionCreators(Actions, dispatch)
   }))
 export default withFirebase(enhancer(Box))
