@@ -14,7 +14,7 @@ type g = { b1: TodoType, b2: TodoType, localBox1: lb, localBox2: lb }
 class Line extends React.Component<g> {
   shouldComponentUpdate(np: g) {
     const pp = this.props
-    if (
+    return (
       np.b1.x === pp.b1.x &&
       np.b1.y === pp.b1.y &&
       np.b1.dx === pp.b1.dx &&
@@ -30,10 +30,7 @@ class Line extends React.Component<g> {
 
       np.localBox2.w === pp.localBox2.w &&
       np.localBox2.h === pp.localBox2.h
-    ) {
-      return false
-    }
-    return true
+    )
   }
 
   render() {
@@ -49,7 +46,7 @@ class Line extends React.Component<g> {
 }
 
 let en1 = connect(
-  (s, p) => ({
+  (s: any, p: any) => ({
     localBox1: s.local[p.b1.id],
     localBox2: s.local[p.b2.id],
   }))

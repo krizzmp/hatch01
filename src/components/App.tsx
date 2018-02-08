@@ -203,7 +203,7 @@ class App extends React.PureComponent<AppProps> {
 
 const en1 = firebaseConnect([`${rootId}/todos`, `${rootId}/lines`])(
   connect(
-    ({firebase}) => ({
+    ({firebase}: any) => ({
       todosRaw: getVal(firebase, `data/${rootId}/todos`, {}),
       linesRaw: getVal(firebase, `data/${rootId}/lines`, {}),
     }),

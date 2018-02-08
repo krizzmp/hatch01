@@ -74,15 +74,12 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
 
   shouldComponentUpdate(np: MeProps, ns: any) {
     let pp = this.props
-    if (
+    return (
       np.id === pp.id &&
       np.name === pp.name &&
       np.selected === pp.selected &&
       !ns.editing
-    ) {
-      return false
-    }
-    return true
+    )
   }
 
   onChange = ({value}) => {
@@ -95,6 +92,11 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
   }
   onFocus = () => {
     this.setState({editing: true})
+  }
+  onDoubleClick = (e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('adsfga')
   }
 
   render() {
@@ -129,7 +131,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
 
   shouldComponentUpdate(np: BoxProps & TodoProps, ns: any) {
     let pp = this.props
-    if (
+    return (
       np.todo.id === pp.todo.id &&
       np.todo.name === pp.todo.name &&
       np.todo.x === pp.todo.x &&
@@ -138,10 +140,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
       np.todo.dy === pp.todo.dy &&
       np.dragging === pp.dragging &&
       np.selected === pp.selected
-    ) {
-      return false
-    }
-    return true
+    )
   }
 
   render() {
@@ -154,6 +153,10 @@ class Box extends React.Component<BoxProps & TodoProps> {
         dragging={this.props.dragging}
         selected={this.props.selected}
         innerRef={(ref) => this.bs = ref}
+        onDoubleClick={(e: any) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
       >
         <MyEditor
           onClick={this.onClick}
@@ -188,10 +191,10 @@ class Box extends React.Component<BoxProps & TodoProps> {
 }
 
 const enhancer = connect(
-  (s, p) => ({
+  (s: any, p: any) => ({
     localBox: s.local[p.todo.id]
   }),
   (dispatch) => ({
     actions: bindActionCreators(Actions, dispatch)
   }))
-export default withFirebase(enhancer(Box))
+export default withFirebase(enhancer(Box as any))

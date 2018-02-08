@@ -4,8 +4,8 @@ import { Provider } from 'react-redux'
 import App from './components/App'
 import './styles/index.css'
 
-const {whyDidYouUpdate} = require('why-did-you-update')
-whyDidYouUpdate(React)
+// const {whyDidYouUpdate} = require('why-did-you-update')
+// whyDidYouUpdate(React)
 
 import store from './reducers'
 
