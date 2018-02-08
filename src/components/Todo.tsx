@@ -174,6 +174,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
     e.stopPropagation()
     this.props.select(this.props.todo.id)
   }
+
   updateSize = () => {
     const {width, height} = this.bs.getBoundingClientRect()
     if (
