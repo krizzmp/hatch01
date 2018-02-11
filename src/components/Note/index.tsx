@@ -8,9 +8,13 @@ import Plain from 'slate-plain-serializer'
 import { Editor } from 'slate-react'
 import * as Actions from 'src/state/actions'
 import { TodoType } from 'src/components/Line'
+import { LocalNote } from 'src/state/reducers'
 import { DefaultText, InnerDivider, OuterDivider } from './styles/editor'
 // -----------src-files---------- //
 import { Todo } from './styles/todo'
+import * as ReactDOM from 'react-dom'
+
+let cuid = require('cuid')
 
 export type TodoProps = {
   todo: TodoType,
@@ -36,8 +40,7 @@ const renderNode = ({node, attributes, children, isSelected}) => {
   }
 }
 type BoxProps = {
-  firebase: any,
-  localBox?: any,
+  localBox?: LocalNote,
   actions: typeof Actions
 }
 
@@ -46,9 +49,12 @@ type MeProps = {
   name: string,
   id: string,
   onClick: any,
+  createNoteBeneath: () => void,
+  select: (id?: string) => void
 }
 
 class MyEditor extends React.Component<MeProps & BoxProps> {
+  editor: Editor
   state = {
     value: Plain.deserialize(this.props.name),
     editing: false,
@@ -60,7 +66,12 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
       }
     },
     'shiftie': () => {
-      //
+      this.onBlur()
+      this.props.createNoteBeneath()
+    },
+    'esc': () => {
+      this.props.select('')
+      this.editor.blur()
     }
   }
 
@@ -71,43 +82,68 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     this.setState({value: Plain.deserialize(nextProps.name)})
   }
 
-  shouldComponentUpdate(np: MeProps, ns: any) {
+  shouldComponentUpdate(np: this['props'], ns: this['state']) {
     let pp = this.props
-    return !(
-      np.id === pp.id &&
-      np.name === pp.name &&
-      np.selected === pp.selected &&
-      !ns.editing
+    return (
+      np.id !== pp.id ||
+      np.name !== pp.name ||
+      np.selected !== pp.selected ||
+      ns.editing ||
+      (np.localBox && np.localBox.isNew) !== (pp.localBox && pp.localBox.isNew)
     )
   }
 
-  onChange = ({value}) => {
-    this.setState({value})
-  }
-  onBlur = () => {
-    let name = Plain.serialize(this.state.value)
-    this.props.actions.UpdateNoteText({id: this.props.id, name})
-    this.setState({editing: false})
-  }
-  onFocus = () => {
-    this.setState({editing: true})
+  componentDidMount() {
+    console.log(this.props.localBox)
+    if (this.props.localBox) {
+      this.editor.focus()
+      setTimeout(
+        () => {
+          console.log(this.editor)
+          let htmlElement = ReactDOM.findDOMNode(this.editor) as HTMLElement
+          htmlElement.focus()
+          this.editor.change(c => c.selectAll())
+
+        },
+        5
+      )
+
+    }
+    // this.extracted(this.props, false)
   }
 
   render() {
     return (
-      <HotKeys handlers={this.handlers}>
+      <HotKeys
+        handlers={this.handlers}
+      >
         <Editor
           value={this.state.value}
           onChange={this.onChange}
           renderNode={renderNode}
           onBlur={this.onBlur}
           onFocus={this.onFocus}
-          readOnly={!this.props.selected}
+          readOnly={!this.props.selected && !(this.props.localBox && this.props.localBox.isNew)}
           onClick={this.props.onClick}
           onKeyDown={(e) => e.shiftKey && e.key === 'Enter' ? false : null}
+          ref={ref => this.editor = ref}
         />
       </HotKeys>
     )
+  }
+
+  onChange = ({value}) => {
+    this.setState({value})
+  }
+
+  onBlur = () => {
+    let name = Plain.serialize(this.state.value)
+    this.props.actions.UpdateNoteText({id: this.props.id, name})
+    this.setState({editing: false})
+  }
+
+  onFocus = () => {
+    this.setState({editing: true})
   }
 }
 
@@ -146,21 +182,29 @@ class Box extends React.Component<BoxProps & TodoProps> {
         dragging={this.props.dragging}
         selected={this.props.selected}
         innerRef={(ref) => this.bs = ref}
-        onDoubleClick={(e: any) => {
-          e.preventDefault()
-          e.stopPropagation()
-        }}
+        onDoubleClick={(e: any) => e.stopPropagation()}
       >
         <MyEditor
           onClick={this.onClick}
           selected={this.props.selected}
-          firebase={this.props.firebase}
           name={this.props.todo.name}
           id={this.props.todo.id}
           actions={this.props.actions}
+          createNoteBeneath={this.createNoteBeneath}
+          localBox={this.props.localBox}
+          select={(id = this.props.todo.id) => this.props.select(id)}
         />
       </Todo>
     )
+  }
+
+  createNoteBeneath = () => {
+    let margin = 8
+    this.props.actions.CreateNote({
+      id: cuid(),
+      x: this.props.todo.x,
+      y: this.props.todo.y + this.props.localBox!.h + margin,
+    })
   }
 
   onClick = (e) => {
@@ -170,9 +214,13 @@ class Box extends React.Component<BoxProps & TodoProps> {
 
   updateSize = () => {
     const {width, height} = this.bs.getBoundingClientRect()
+
     if (
-      !R.pathEq(['localBox', 'w'], width, this.props) ||
-      !R.pathEq(['localBox', 'h'], height, this.props)
+      R.anyPass([
+          R.complement(R.pathEq(['localBox', 'w'], width)),
+          R.complement(R.pathEq(['localBox', 'h'], width))
+        ]
+      )(this.props)
     ) {
       this.props.actions.UpdateNoteSize({id: this.props.todo.id, h: height, w: width})
     }

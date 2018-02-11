@@ -1,15 +1,17 @@
-import * as _ from 'lodash'
 import * as R from 'ramda'
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { firebaseConnect, getVal } from 'react-redux-firebase'
 import { bindActionCreators } from 'redux'
+import { LineType } from 'src/types'
 import { Canvas } from './components/Canvas'
 import { ToolBar } from './components/Toolbar'
 import Line, { TodoType } from 'src/components/Line'
 import Note from 'src/components/Note'
 import * as Actions from 'src/state/actions'
 import { rootId } from 'src/utils'
+
+let cuid = require('cuid')
 
 function getConnectedLine(lines: { [id: string]: LineType }, b1: string, b2: string) {
 
@@ -28,46 +30,45 @@ function getConnectedLine(lines: { [id: string]: LineType }, b1: string, b2: str
   return getLineId(lines)
 }
 
-interface LineType {
-  id: string,
-  b1: string,
-  b2: string
-}
-
 type AppProps = {
   firebase: any,
   todosRaw: any,
   linesRaw: { [id: string]: LineType },
+  canvas: { selected: string },
   actions: typeof Actions
 }
 
 class App extends React.Component<AppProps> {
   $center
   state = {
-    dx: 0, dy: 0,
     dragging: undefined as TodoType | undefined,
     draggingInitPos: undefined as { x: number, y: number } | undefined,
-    selected: '' as string
   }
-  Lines = () => _.map(_.values(this.props.linesRaw), (line) => (
-    <Line
-      key={line.id}
-      b1={this.props.todosRaw[line.b1]}
-      b2={this.props.todosRaw[line.b2]}
-    />
-  ))
+  Lines = R.pipe(
+    R.values,
+    R.map((line: LineType) => (
+      <Line
+        key={line.id}
+        b1={this.props.todosRaw[line.b1]}
+        b2={this.props.todosRaw[line.b2]}
+      />
+    ))
+  )
 
-  Notes = () => _.values(this.props.todosRaw).map((todo) => (
+  Notes = R.pipe(
+    R.values,
+    R.map((todo) => (
       <Note
         key={todo.id}
         todo={todo}
         onDragStart={this.dragStart}
         dragging={!!this.state.dragging && todo.id === this.state.dragging.id}
-        selected={this.state.selected === todo.id}
+        selected={this.props.canvas.selected === todo.id}
         select={this.select}
       />
-    )
+    ))
   )
+
   dragStart = (e, todo) => {
     this.setState({
       dragging: todo,
@@ -89,7 +90,7 @@ class App extends React.Component<AppProps> {
 
       let connectedLine = getConnectedLine(this.props.linesRaw, b1, b2)
       if (connectedLine) {
-        this.props.actions.DisconnectLine({lineId: connectedLine, noteId: todo.id})
+        this.props.actions.DisconnectLine({lineId: connectedLine, noteId: b2})
       } else {
         this.props.actions.ConnectNote({b1, b2})
       }
@@ -101,13 +102,14 @@ class App extends React.Component<AppProps> {
   }
 
   select = (id) => {
-    this.setState({selected: id})
+    this.props.actions.SelectNote({id})
   }
   createTodo = (e, canvas) => {
     let bcr = canvas.getBoundingClientRect()
     const x = e.clientX - (bcr.left)
     const y = e.clientY - (bcr.top)
-    this.props.actions.CreateNote({x, y})
+    console.log(this.props.actions.CreateNote)
+    this.props.actions.CreateNote({id: cuid(), x, y})
   }
   onMouseMove = (e) => {
     if (this.state.dragging && this.state.draggingInitPos) {
@@ -129,8 +131,8 @@ class App extends React.Component<AppProps> {
           onMouseUp={this.onDragEnd}
           centerRef={(ref) => this.$center = ref}
         >
-          {this.Lines()}
-          {this.Notes()}
+          {this.Lines(this.props.linesRaw)}
+          {this.Notes(this.props.todosRaw)}
         </Canvas>
       </React.Fragment>
     )
@@ -139,9 +141,10 @@ class App extends React.Component<AppProps> {
 
 const en1 = firebaseConnect([`${rootId}/todos`, `${rootId}/lines`])(
   connect(
-    ({firebase}: any) => ({
+    ({firebase, canvas}: any) => ({
       todosRaw: getVal(firebase, `data/${rootId}/todos`, {}),
       linesRaw: getVal(firebase, `data/${rootId}/lines`, {}),
+      canvas
     }),
     (dispatch) => ({
       actions: bindActionCreators(Actions, dispatch)
