@@ -1,6 +1,6 @@
 import styled from 'react-emotion'
 
-export const Todos = styled<any, 'div'>('div')(
+export const Center = styled<any, 'div'>('div')(
   {
     left: '50%',
     top: '50%',

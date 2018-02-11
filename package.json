@@ -26,18 +26,20 @@
     "slate-react": "^0.11.1"
   },
   "scripts": {
-    "start": "react-scripts-ts start",
-    "build": "react-scripts-ts build",
-    "test": "react-scripts-ts test --env=jsdom",
+    "start": "react-app-rewired start --scripts-version react-scripts-ts",
+    "build": "react-app-rewired build --scripts-version react-scripts-ts",
+    "test": "react-app-rewired test --scripts-version react-scripts-ts --env=jsdom",
     "eject": "react-scripts-ts eject"
   },
   "devDependencies": {
     "@types/jest": "^22.0.1",
     "@types/lodash": "^4.14.92",
     "@types/node": "^9.3.0",
+    "@types/ramda": "^0.25.17",
     "@types/react": "^16.0.34",
     "@types/react-dom": "^16.0.3",
     "@types/recompose": "^0.24.4",
+    "react-app-rewired": "^1.4.1",
     "why-did-you-update": "^0.1.0"
   }
 }

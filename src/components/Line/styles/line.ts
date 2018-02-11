@@ -1,5 +1,5 @@
 import styled from 'react-emotion'
-import colors from './colors'
+import colors from '../../../styles/colors'
 
 type Vec = { x: number, y: number }
 const vec = (pos1: Vec, pos2: Vec): Vec => {

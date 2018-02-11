@@ -1,5 +1,5 @@
 import styled from 'react-emotion'
-import colors from './colors'
+import colors from '../../../styles/colors'
 export const Todo = styled<any, 'div'>('div')(
   {
     position: 'absolute',

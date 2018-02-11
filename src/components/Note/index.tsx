@@ -1,16 +1,16 @@
-import * as React from 'react'
-import * as style from '../styles/styles'
-import { TodoType } from './Line'
-import Plain from 'slate-plain-serializer'
-import { Editor } from 'slate-react'
-import { HotKeys } from 'react-hotkeys'
-import { bindActionCreators } from 'redux'
-import { UpdateNoteSize } from '../sagas'
 import * as R from 'ramda'
+import * as React from 'react'
+import { HotKeys } from 'react-hotkeys'
 import { connect } from 'react-redux'
 import { withFirebase } from 'react-redux-firebase'
-import { RemoveNote } from '../sagas'
-import { rootId } from '../utils'
+import { bindActionCreators } from 'redux'
+import Plain from 'slate-plain-serializer'
+import { Editor } from 'slate-react'
+import * as Actions from 'src/state/actions'
+import { TodoType } from 'src/components/Line'
+import { DefaultText, InnerDivider, OuterDivider } from './styles/editor'
+// -----------src-files---------- //
+import { Todo } from './styles/todo'
 
 export type TodoProps = {
   todo: TodoType,
@@ -22,20 +22,19 @@ export type TodoProps = {
 const renderNode = ({node, attributes, children, isSelected}) => {
   if (isSelected || node.text !== '---') {
     return (
-      <style.DefaultText {...attributes}>
+      <DefaultText {...attributes}>
         {children}
-      </style.DefaultText>
+      </DefaultText>
     )
   } else {
     return (
-      <style.OuterDivider {...attributes}>
-        <style.InnerDivider/>
+      <OuterDivider {...attributes}>
+        <InnerDivider/>
         {children}
-      </style.OuterDivider>
+      </OuterDivider>
     )
   }
 }
-const Actions = {UpdateNoteSize, RemoveNote}
 type BoxProps = {
   firebase: any,
   localBox?: any,
@@ -55,12 +54,12 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     editing: false,
   }
   handlers = {
-    'remove': (e) => {
+    'remove': () => {
       if (!this.state.editing) {
         this.props.actions.RemoveNote({id: this.props.id})
       }
     },
-    'shiftie': (e) => {
+    'shiftie': () => {
       //
     }
   }
@@ -74,7 +73,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
 
   shouldComponentUpdate(np: MeProps, ns: any) {
     let pp = this.props
-    return (
+    return !(
       np.id === pp.id &&
       np.name === pp.name &&
       np.selected === pp.selected &&
@@ -85,24 +84,18 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
   onChange = ({value}) => {
     this.setState({value})
   }
-  onBlur = (e) => {
+  onBlur = () => {
     let name = Plain.serialize(this.state.value)
-    this.props.firebase.update(`${rootId}/todos/${this.props.id}`, {name})
+    this.props.actions.UpdateNoteText({id: this.props.id, name})
     this.setState({editing: false})
   }
   onFocus = () => {
     this.setState({editing: true})
   }
-  onDoubleClick = (e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    console.log('adsfga')
-  }
 
   render() {
     return (
       <HotKeys handlers={this.handlers}>
-
         <Editor
           value={this.state.value}
           onChange={this.onChange}
@@ -131,7 +124,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
 
   shouldComponentUpdate(np: BoxProps & TodoProps, ns: any) {
     let pp = this.props
-    return (
+    return !(
       np.todo.id === pp.todo.id &&
       np.todo.name === pp.todo.name &&
       np.todo.x === pp.todo.x &&
@@ -145,7 +138,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
 
   render() {
     return (
-      <style.Todo
+      <Todo
         {...this.props.todo}
         onDragStart={this.onDragStart}
         draggable="true"
@@ -166,7 +159,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
           id={this.props.todo.id}
           actions={this.props.actions}
         />
-      </style.Todo>
+      </Todo>
     )
   }
 

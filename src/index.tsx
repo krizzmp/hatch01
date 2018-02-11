@@ -7,7 +7,7 @@ import './styles/index.css'
 // const {whyDidYouUpdate} = require('why-did-you-update')
 // whyDidYouUpdate(React)
 
-import store from './reducers'
+import store from './state/reducers'
 
 const Root = () => (
   <Provider store={store}>
