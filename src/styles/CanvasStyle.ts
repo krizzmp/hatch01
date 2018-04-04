@@ -6,5 +6,5 @@ export const Canvas = styled('div')({
   padding: 1,
   position: 'relative',
   flex: 1,
-  backgroundColor: '#eeeeee'
+  backgroundColor: '#eeeeee',
 })

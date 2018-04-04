@@ -7,6 +7,6 @@ export const Center = styled<any, 'div'>('div')(
     position: 'relative',
   },
   ({dx, dy}) => ({
-    transform: `translate(${dx}px, ${dy}px)`
+    transform: `translate(${dx}px, ${dy}px) scale(1, 1)`
   })
 )

@@ -3,6 +3,7 @@ import * as React from 'react'
 import { HotKeys } from 'react-hotkeys'
 import { Center } from './styles/center'
 import { Canvas as CanvasStyle } from './styles/canvas'
+
 type CanvasProps = {
   centerRef?: (ref: HTMLDivElement) => void,
   onMouseMove: any,
@@ -29,7 +30,10 @@ export class Canvas extends React.Component<CanvasProps> {
     return (
       <HotKeys
         keyMap={{'remove': 'del', 'shiftie': 'shift+return'}}
-        className={css({flex: 1, display: 'flex'})}
+        {...{
+          className:
+            css({flex: 1, display: 'flex'})
+        } as any}
       >
         <CanvasStyle
           onWheel={this.pan}

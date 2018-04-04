@@ -1,15 +1,12 @@
 import * as R from 'ramda'
 import * as React from 'react'
-import { connect } from 'react-redux'
-import { firebaseConnect, getVal } from 'react-redux-firebase'
 import { bindActionCreators } from 'redux'
+import { fbConnect } from 'src/extra'
 import { LineType } from 'src/types'
 import { Canvas } from './components/Canvas'
-import { ToolBar } from './components/Toolbar'
 import Line, { TodoType } from 'src/components/Line'
 import Note from 'src/components/Note'
 import * as Actions from 'src/state/actions'
-import { rootId } from 'src/utils'
 
 let cuid = require('cuid')
 
@@ -31,11 +28,11 @@ function getConnectedLine(lines: { [id: string]: LineType }, b1: string, b2: str
 }
 
 type AppProps = {
-  firebase: any,
   todosRaw: any,
   linesRaw: { [id: string]: LineType },
-  canvas: { selected: string },
-  actions: typeof Actions
+  selected: string,
+  actions: typeof Actions,
+  match: any
 }
 
 class App extends React.Component<AppProps> {
@@ -63,8 +60,9 @@ class App extends React.Component<AppProps> {
         todo={todo}
         onDragStart={this.dragStart}
         dragging={!!this.state.dragging && todo.id === this.state.dragging.id}
-        selected={this.props.canvas.selected === todo.id}
+        selected={this.props.selected === todo.id}
         select={this.select}
+        projectId={this.props.match.params.id}
       />
     ))
   )
@@ -81,7 +79,7 @@ class App extends React.Component<AppProps> {
     if (!this.state.dragging) {
       return
     }
-
+    let projectId = this.props.match.params.id
     let todo = this.props.todosRaw[this.state.dragging.id]
     let el = document.querySelector('[data-box-id]:hover')
     if (el) {
@@ -90,13 +88,13 @@ class App extends React.Component<AppProps> {
 
       let connectedLine = getConnectedLine(this.props.linesRaw, b1, b2)
       if (connectedLine) {
-        this.props.actions.DisconnectLine({lineId: connectedLine, noteId: b2})
+        this.props.actions.DisconnectLine({lineId: connectedLine, noteId: b2, projectId})
       } else {
-        this.props.actions.ConnectNote({b1, b2})
+        this.props.actions.ConnectNote({b1, b2, projectId})
       }
     } else {
       const {id, x, y, dx, dy} = todo
-      this.props.actions.MoveNote({id, x, y, dx, dy})
+      this.props.actions.MoveNote({id, x, y, dx, dy, projectId})
     }
     this.setState({dragging: undefined, draggingInitPos: undefined})
   }
@@ -108,22 +106,24 @@ class App extends React.Component<AppProps> {
     let bcr = canvas.getBoundingClientRect()
     const x = e.clientX - (bcr.left)
     const y = e.clientY - (bcr.top)
-    console.log(this.props.actions.CreateNote)
-    this.props.actions.CreateNote({id: cuid(), x, y})
+    let projectId = this.props.match.params.id
+
+    this.props.actions.CreateNote({id: cuid(), x, y, projectId})
   }
   onMouseMove = (e) => {
     if (this.state.dragging && this.state.draggingInitPos) {
       const id = this.state.dragging.id
       const dx = e.clientX - this.state.draggingInitPos.x
       const dy = e.clientY - this.state.draggingInitPos.y
-      this.props.actions.MoveDelta({id, dx, dy})
+      let projectId = this.props.match.params.id
+      this.props.actions.MoveDelta({id, dx, dy, projectId})
     }
   }
 
   render() {
+    console.log(this.props.match)
     return (
       <React.Fragment>
-        <ToolBar/>
         <Canvas
           onMouseMove={this.onMouseMove}
           onDoubleClick={(e) => this.createTodo(e, this.$center)}
@@ -139,18 +139,16 @@ class App extends React.Component<AppProps> {
   }
 }
 
-const en1 = firebaseConnect([`${rootId}/todos`, `${rootId}/lines`])(
-  connect(
-    ({firebase, canvas}: any) => ({
-      todosRaw: getVal(firebase, `data/${rootId}/todos`, {}),
-      linesRaw: getVal(firebase, `data/${rootId}/lines`, {}),
-      canvas
-    }),
-    (dispatch) => ({
-      actions: bindActionCreators(Actions, dispatch)
-    })
-  )
-  (App)
+const enhance = fbConnect(
+  (props) => props.match.params.id,
+  ['todos', 'lines'],
+  (state, firebase) => ({
+    todosRaw: firebase('todos'),
+    linesRaw: firebase('lines'),
+    selected: state.canvas.selected
+  }),
+  (dispatch) => ({
+    actions: bindActionCreators(Actions, dispatch)
+  })
 )
-
-export default en1
+export default enhance(App)

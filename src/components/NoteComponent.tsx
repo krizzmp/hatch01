@@ -1,8 +1,8 @@
+import { css } from 'emotion'
 import * as R from 'ramda'
 import * as React from 'react'
 import { HotKeys } from 'react-hotkeys'
 import { connect } from 'react-redux'
-import { withFirebase } from 'react-redux-firebase'
 import { bindActionCreators } from 'redux'
 import Plain from 'slate-plain-serializer'
 import { Editor } from 'slate-react'
@@ -10,7 +10,6 @@ import * as Actions from 'src/state/actions'
 import { TodoType } from 'src/components/Line'
 import { LocalNote } from 'src/state/reducers'
 import { DefaultText, InnerDivider, OuterDivider } from './styles/editor'
-// -----------src-files---------- //
 import { Todo } from './styles/todo'
 import * as ReactDOM from 'react-dom'
 
@@ -24,24 +23,31 @@ export type TodoProps = {
   selected: boolean,
 }
 const renderNode = ({node, attributes, children, isSelected}) => {
-  if (isSelected || node.text !== '---') {
+  if (
+    (node.text.startsWith('--') || node.text.startsWith('- - -')) && !isSelected
+  ) {
     return (
-      <DefaultText {...attributes}>
+      <OuterDivider {...attributes}>
+        <InnerDivider dashed={node.text.startsWith('- - -')}/>
         {children}
-      </DefaultText>
+      </OuterDivider>
     )
   } else {
     return (
-      <OuterDivider {...attributes}>
-        <InnerDivider/>
+      <DefaultText
+        {...attributes}
+        field={node.text.startsWith('-') || node.text.startsWith('+')}
+        h1={node.text.startsWith('#')}
+      >
         {children}
-      </OuterDivider>
+      </DefaultText>
     )
   }
 }
 type BoxProps = {
   localBox?: LocalNote,
-  actions: typeof Actions
+  actions: typeof Actions,
+  projectId: string
 }
 
 type MeProps = {
@@ -62,7 +68,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
   handlers = {
     'remove': () => {
       if (!this.state.editing) {
-        this.props.actions.RemoveNote({id: this.props.id})
+        this.props.actions.RemoveNote({id: this.props.id, projectId: this.props.projectId})
       }
     },
     'shiftie': () => {
@@ -73,24 +79,6 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
       this.props.select('')
       this.editor.blur()
     }
-  }
-
-  componentWillReceiveProps(nextProps: MeProps) {
-    if (this.props.name === nextProps.name && this.state.editing) {
-      return
-    }
-    this.setState({value: Plain.deserialize(nextProps.name)})
-  }
-
-  shouldComponentUpdate(np: this['props'], ns: this['state']) {
-    let pp = this.props
-    return (
-      np.id !== pp.id ||
-      np.name !== pp.name ||
-      np.selected !== pp.selected ||
-      ns.editing ||
-      (np.localBox && np.localBox.isNew) !== (pp.localBox && pp.localBox.isNew)
-    )
   }
 
   componentDidMount() {
@@ -112,6 +100,24 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     // this.extracted(this.props, false)
   }
 
+  componentWillReceiveProps(nextProps: MeProps) {
+    if (this.props.name === nextProps.name && this.state.editing) {
+      return
+    }
+    this.setState({value: Plain.deserialize(nextProps.name)})
+  }
+
+  shouldComponentUpdate(np: this['props'], ns: this['state']) {
+    let pp = this.props
+    return (
+      np.id !== pp.id ||
+      np.name !== pp.name ||
+      np.selected !== pp.selected ||
+      ns.editing ||
+      (np.localBox && np.localBox.isNew) !== (pp.localBox && pp.localBox.isNew)
+    )
+  }
+
   render() {
     return (
       <HotKeys
@@ -127,6 +133,10 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
           onClick={this.props.onClick}
           onKeyDown={(e) => e.shiftKey && e.key === 'Enter' ? false : null}
           ref={ref => this.editor = ref}
+          className={css({
+            paddingTop: '1.3ch',
+            paddingBottom: '1.2ch',
+          })}
         />
       </HotKeys>
     )
@@ -138,7 +148,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
 
   onBlur = () => {
     let name = Plain.serialize(this.state.value)
-    this.props.actions.UpdateNoteText({id: this.props.id, name})
+    this.props.actions.UpdateNoteText({id: this.props.id, name, projectId: this.props.projectId})
     this.setState({editing: false})
   }
 
@@ -147,8 +157,8 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
   }
 }
 
-class Box extends React.Component<BoxProps & TodoProps> {
-  bs: HTMLDivElement
+class Note extends React.Component<BoxProps & TodoProps> {
+  bs: HTMLDivElement | undefined
 
   componentDidMount() {
     this.updateSize()
@@ -193,6 +203,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
           createNoteBeneath={this.createNoteBeneath}
           localBox={this.props.localBox}
           select={(id = this.props.todo.id) => this.props.select(id)}
+          projectId={this.props.projectId}
         />
       </Todo>
     )
@@ -200,10 +211,13 @@ class Box extends React.Component<BoxProps & TodoProps> {
 
   createNoteBeneath = () => {
     let margin = 8
+    let projectId = this.props.projectId
+
     this.props.actions.CreateNote({
       id: cuid(),
       x: this.props.todo.x,
       y: this.props.todo.y + this.props.localBox!.h + margin,
+      projectId
     })
   }
 
@@ -213,7 +227,7 @@ class Box extends React.Component<BoxProps & TodoProps> {
   }
 
   updateSize = () => {
-    const {width, height} = this.bs.getBoundingClientRect()
+    const {width, height} = this.bs!.getBoundingClientRect()
 
     if (
       R.anyPass([
@@ -239,4 +253,4 @@ const enhancer = connect(
   (dispatch) => ({
     actions: bindActionCreators(Actions, dispatch)
   }))
-export default withFirebase(enhancer(Box as any))
+export default enhancer(Note)
