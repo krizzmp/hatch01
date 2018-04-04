@@ -1,5 +1,5 @@
 import styled from 'react-emotion'
-import colors from '../../../styles/colors'
+import colors from 'src/styles/colors'
 
 import tinycolor from 'tinycolor2'
 
@@ -110,7 +110,7 @@ export default function elevate(zValue: number, color: string = 'black', opacity
   return `${umbraZValue} ${umbraColor}, ${penumbraZValue} ${penumbraColor}, ${ambientZValue} ${ambientColor}`
 }
 
-export const Todo = styled<any, 'div'>('div')(
+export const TodoStyle = styled<any, 'div'>('div')(
   {
     position: 'absolute',
     display: 'inline-block',

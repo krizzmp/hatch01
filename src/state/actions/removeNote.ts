@@ -1,24 +1,22 @@
-import { select, takeEvery } from 'redux-saga/effects'
-import actionCreatorFactory from 'redux-typescript-actions'
-import { Action } from 'redux-typescript-actions'
-import { LineType } from 'src/types'
-import { rootId } from 'src/utils'
-import * as R from 'ramda'
-const actionCreator = actionCreatorFactory()
+import { select, takeEvery } from "redux-saga/effects";
+import { Action } from "redux-typescript-actions";
+import { actionCreator } from "src/state/actionCreator";
+import { LineType } from "src/types";
+import * as R from "ramda";
 
-type RemoveNoteProps = { id: string }
-export const RemoveNote = actionCreator<RemoveNoteProps>('REMOVE_BOX')
+type RemoveNoteProps = { id: string; projectId: string };
+export const RemoveNote = actionCreator<RemoveNoteProps>("REMOVE_BOX");
 export function* removeNote(firebase: any, action: Action<RemoveNoteProps>) {
-  let noteId = action.payload.id
-  let lines: {[id: string]: LineType} = yield select(R.path(['firebase', 'data', rootId, 'lines']))
+  let noteId = action.payload.id;
+  let lines: { [id: string]: LineType } = yield select(
+    R.path(["firebase", "data", action.payload.projectId, "lines"])
+  );
   R.pipe(
     R.filter((line: LineType) => line.b1 === noteId || line.b2 === noteId),
-    R.forEachObjIndexed(
-      (line, id: string) => {
-        firebase.remove(`${rootId}/lines/${id}`)
-      },
-    ),
-  )(lines)
-  firebase.remove(`${rootId}/todos/${noteId}`)
+    R.forEachObjIndexed((line, id: string) => {
+      firebase.remove(`${action.payload.projectId}/lines/${id}`);
+    })
+  )(lines);
+  firebase.remove(`${action.payload.projectId}/todos/${noteId}`);
 }
-export default (firebase) => takeEvery(RemoveNote.type, removeNote, firebase)
+export default firebase => takeEvery(RemoveNote.type, removeNote, firebase);

@@ -1,14 +1,12 @@
-import { takeEvery } from 'redux-saga/effects'
-import actionCreatorFactory from 'redux-typescript-actions'
-import { Action } from 'redux-typescript-actions'
-import { rootId } from 'src/utils'
-const actionCreator = actionCreatorFactory()
+import { takeEvery } from "redux-saga/effects";
+import { Action } from "redux-typescript-actions";
+import { actionCreator } from "src/state/actionCreator";
 
-type MoveDeltaProps = { dx: number, dy: number, id: string }
-export const MoveDelta = actionCreator<MoveDeltaProps>('MOVE_DELTA')
+type MoveDeltaProps = { dx: number; dy: number; id: string; projectId: string };
+export const MoveDelta = actionCreator<MoveDeltaProps>("MOVE_DELTA");
 
 export function* moveDelta(firebase: any, action: Action<MoveDeltaProps>) {
-  const {id, dx, dy} = action.payload
-  firebase.update(`${rootId}/todos/${id}`, {dx, dy})
+  const { id, dx, dy, projectId } = action.payload;
+  firebase.update(`${projectId}/todos/${id}`, { dx, dy });
 }
-export default (firebase) => takeEvery(MoveDelta.type, moveDelta, firebase)
+export default firebase => takeEvery(MoveDelta.type, moveDelta, firebase);

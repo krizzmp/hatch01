@@ -1,7 +1,4 @@
-import actionCreatorFactory from 'redux-typescript-actions'
+import { actionCreator } from "src/state/actionCreator";
 
-const actionCreator = actionCreatorFactory()
-// let cuid = require('cuid')
-
-type SelectNoteProps = {id: string }
-export const SelectNote = actionCreator<SelectNoteProps>('SELECT_NOTE')
+type SelectNoteProps = { id: string };
+export const SelectNote = actionCreator<SelectNoteProps>("SELECT_NOTE");

@@ -1,5 +1,5 @@
 import styled from 'react-emotion'
-import colors from '../../../styles/colors'
+import colors from 'src/styles/colors'
 
 export const DefaultText = styled<{field: boolean, h1: boolean}, 'div'>('div')(
   {

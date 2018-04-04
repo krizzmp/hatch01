@@ -1,6 +1,6 @@
 import styled from 'react-emotion'
 
-export const Canvas = styled('div')({
+export const CanvasStyle = styled('div')({
   // border: '1px solid #777',
   overflow: 'hidden',
   padding: 1,

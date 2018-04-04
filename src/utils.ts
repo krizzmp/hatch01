@@ -1,5 +1,8 @@
 import * as _ from 'lodash'
-import { getVal } from 'react-redux-firebase'
+
+import { firebaseConnect, getVal } from 'react-redux-firebase'
+import { connect } from 'react-redux'
+import { RootState } from 'src/state/reducers'
 
 export const toList = (obj) => _(obj)
   .toPairs()
@@ -23,6 +26,26 @@ export const fbMergeToList = (fb, path: string, local, d) => {
   )
 }
 
-export const rootId = 'quatasd'
+// export const rootId = 'quatasd'
 
-export const withRoot = (str: string) => rootId + '/' + str
+// export const withRoot = (str: string) => rootId + '/' + str
+
+const en1 = (
+  getProjectId: (props: any) => string,
+  paths: Array<string>,
+  mapStateToProps: (state: RootState, firebase: any) => { [prop: string]: any },
+  mapActionsToProps: (dispatch: any) => { [prop: string]: any }
+) =>
+  (App) =>
+    firebaseConnect(
+      (props: any) => paths.map(path => getProjectId(props) + '/' + path)
+    )(
+      connect(
+        (state, props) => (
+          mapStateToProps(state, (path) => getVal(state.firebase, `data/${getProjectId(props)}/${path}`, {}))
+        ),
+        mapActionsToProps
+      )
+      (App)
+    )
+export const fbConnect = en1

@@ -1,15 +1,17 @@
-import * as React from 'react'
-import { connect } from 'react-redux'
-import { Line as LineStyle } from './styles/line'
+import * as React from "react";
+import { connect } from "react-redux";
+import { LineStyle } from "src/styles/LineStyle";
 
 export type TodoType = {
-  id: string,
-  x: number, y: number,
-  dx: number, dy: number,
-  name: string
-}
-type lb = { w: number, h: number }
-type g = { b1: TodoType, b2: TodoType, localBox1: lb, localBox2: lb }
+  id: string;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  name: string;
+};
+type lb = { w: number; h: number };
+type g = { b1: TodoType; b2: TodoType; localBox1: lb; localBox2: lb };
 
 class Line extends React.Component<g> {
   // shouldComponentUpdate(np: g) {
@@ -41,13 +43,12 @@ class Line extends React.Component<g> {
         localBox1={this.props.localBox1}
         localBox2={this.props.localBox2}
       />
-    )
+    );
   }
 }
 
-let en1 = connect(
-  (s: any, p: any) => ({
-    localBox1: s.local[p.b1.id],
-    localBox2: s.local[p.b2.id],
-  }))
-export default en1(Line)
+let en1 = connect((s: any, p: any) => ({
+  localBox1: s.local[p.b1.id],
+  localBox2: s.local[p.b2.id]
+}));
+export default en1(Line);

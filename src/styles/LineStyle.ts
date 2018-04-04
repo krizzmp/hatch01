@@ -1,5 +1,5 @@
 import styled from 'react-emotion'
-import colors from '../../../styles/colors'
+import colors from 'src/styles/colors'
 
 type Vec = { x: number, y: number }
 const vec = (pos1: Vec, pos2: Vec): Vec => {
@@ -20,7 +20,7 @@ let r = (b, lb) => ({
   y: b.y + b.dy + (lb.h ? (lb.h / 2) : 0)
 })
 
-export const Line = styled<any, 'div'>('div')(({b1, b2, localBox1, localBox2}) => {
+export const LineStyle = styled<any, 'div'>('div')(({b1, b2, localBox1, localBox2}) => {
   let v = vec(r(b1, localBox1), r(b2, localBox2))
   return ({
     borderTop: '1px dashed ' + colors.noteBorder,
