@@ -47,8 +47,11 @@ class App extends React.Component<AppProps> {
     R.map((line: LineType) => (
       <Line
         key={line.id}
+        id={line.id}
         b1={this.props.todosRaw[line.b1]}
         b2={this.props.todosRaw[line.b2]}
+        linesRaw={this.props.linesRaw}
+        todosRaw={this.props.todosRaw}
       />
     ))
   );
