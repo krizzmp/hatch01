@@ -1,11 +1,10 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
+import { withRouter, RouteComponentProps } from "react-router-dom";
 
-interface Props {
+type Props = {
   authExists: boolean;
-  history: any;
-}
+} & RouteComponentProps<any>;
 class ProtectedPage extends React.Component<Props> {
   componentWillReceiveProps({ authExists, history }: Props) {
     if (!authExists) {
@@ -17,7 +16,7 @@ class ProtectedPage extends React.Component<Props> {
     return <React.Fragment>{this.props.children}</React.Fragment>;
   }
 }
-
-export default connect(({ firebase: { auth } }) => ({
+type f = { firebase: { auth: { uid: string } } };
+export default connect(({ firebase: { auth } }: f) => ({
   authExists: !!auth && !!auth.uid
 }))(withRouter(ProtectedPage));

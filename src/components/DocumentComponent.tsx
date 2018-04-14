@@ -7,6 +7,7 @@ import { Canvas } from "src/components/CanvasComponent";
 import Line, { TodoType } from "src/components/LineComponent";
 import Note from "src/components/NoteComponent";
 import * as Actions from "src/state/actions/index";
+import { Axjs } from "src/axjs";
 
 let cuid = require("cuid");
 
@@ -14,18 +15,13 @@ function getConnectedLine(
   lines: { [id: string]: LineType },
   b1: string,
   b2: string
-): string {
-  let isConnected = line =>
+): LineType {
+  let isConnected = (line: LineType) =>
     (line.b1 === b1 && line.b2 === b2) || (line.b1 === b2 && line.b2 === b1);
 
-  let getLineId = R.pipe(
-    R.defaultTo({}),
-    R.filter(isConnected),
-    R.keys,
-    R.head
-  );
-
-  return getLineId(lines);
+  // return getLineId(Object.values(lines));
+  let g = new Axjs(Object.values(lines)).filter(isConnected).head();
+  return g!;
 }
 
 type AppProps = {
@@ -37,7 +33,7 @@ type AppProps = {
 };
 
 class App extends React.Component<AppProps> {
-  $center;
+  $center?: Element;
   state = {
     dragging: undefined as TodoType | undefined,
     draggingInitPos: undefined as { x: number; y: number } | undefined
@@ -71,7 +67,7 @@ class App extends React.Component<AppProps> {
     ))
   );
 
-  dragStart = (e, todo) => {
+  dragStart = (e: React.DragEvent<HTMLDivElement>, todo: TodoType) => {
     this.setState({
       dragging: todo,
       draggingInitPos: { x: e.clientX, y: e.clientY }
@@ -93,7 +89,7 @@ class App extends React.Component<AppProps> {
       let connectedLine = getConnectedLine(this.props.linesRaw, b1, b2);
       if (connectedLine) {
         this.props.actions.DisconnectLine({
-          lineId: connectedLine,
+          lineId: connectedLine.id,
           noteId: b2,
           projectId
         });
@@ -107,10 +103,10 @@ class App extends React.Component<AppProps> {
     this.setState({ dragging: undefined, draggingInitPos: undefined });
   };
 
-  select = id => {
+  select = (id: string) => {
     this.props.actions.SelectNote({ id });
   };
-  createTodo = (e, canvas) => {
+  createTodo = (e: React.MouseEvent<HTMLDivElement>, canvas: Element) => {
     let bcr = canvas.getBoundingClientRect();
     const x = e.clientX - bcr.left;
     const y = e.clientY - bcr.top;
@@ -118,7 +114,7 @@ class App extends React.Component<AppProps> {
 
     this.props.actions.CreateNote({ id: cuid(), x, y, projectId });
   };
-  onMouseMove = e => {
+  onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (this.state.dragging && this.state.draggingInitPos) {
       const id = this.state.dragging.id;
       const dx = e.clientX - this.state.draggingInitPos.x;
@@ -133,7 +129,9 @@ class App extends React.Component<AppProps> {
       <React.Fragment>
         <Canvas
           onMouseMove={this.onMouseMove}
-          onDoubleClick={e => this.createTodo(e, this.$center)}
+          onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) =>
+            this.createTodo(e, this.$center!)
+          }
           onClick={() => this.select("")}
           onMouseUp={this.onDragEnd}
           centerRef={ref => (this.$center = ref)}

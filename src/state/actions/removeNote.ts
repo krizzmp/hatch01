@@ -19,4 +19,5 @@ export function* removeNote(firebase: any, action: Action<RemoveNoteProps>) {
   )(lines);
   firebase.remove(`${action.payload.projectId}/todos/${noteId}`);
 }
-export default firebase => takeEvery(RemoveNote.type, removeNote, firebase);
+export default (firebase: any) =>
+  takeEvery(RemoveNote.type, removeNote, firebase);

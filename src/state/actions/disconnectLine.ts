@@ -10,7 +10,7 @@ type DisconnectLineProps = {
 export const DisconnectLine = actionCreator<DisconnectLineProps>(
   "DISCONNECT_NOTE"
 );
-export function* disconnectLine(
+export function disconnectLine(
   firebase: any,
   action: Action<DisconnectLineProps>
 ) {
@@ -21,5 +21,5 @@ export function* disconnectLine(
     dy: 0
   });
 }
-export default firebase =>
+export default (firebase: any) =>
   takeEvery(DisconnectLine.type, disconnectLine, firebase);

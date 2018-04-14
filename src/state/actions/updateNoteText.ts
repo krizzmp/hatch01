@@ -7,7 +7,7 @@ export const UpdateNoteText = actionCreator<UpdateNoteTextProps>(
   "UPDATE_NOTE_TEXT"
 );
 
-export function* updateNoteText(
+export function updateNoteText(
   firebase: any,
   action: Action<UpdateNoteTextProps>
 ) {
@@ -15,5 +15,5 @@ export function* updateNoteText(
     name: action.payload.name
   });
 }
-export default firebase =>
+export default (firebase: any) =>
   takeEvery(UpdateNoteText.type, updateNoteText, firebase);

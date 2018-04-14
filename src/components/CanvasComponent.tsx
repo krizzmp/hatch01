@@ -17,7 +17,7 @@ export class Canvas extends React.Component<CanvasProps> {
     dx: 0,
     dy: 0
   };
-  pan = e => {
+  pan = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.ctrlKey) {
       e.stopPropagation();

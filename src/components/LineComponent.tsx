@@ -4,7 +4,7 @@ import styled from "react-emotion";
 import colors from "src/styles/colors";
 import { LineType } from "src/types";
 import { Axjs } from "src/axjs";
-//#region s
+//#region types
 export type TodoType = {
   id: string;
   x: number;
@@ -23,6 +23,7 @@ type P_Line = {
   todosRaw: { [id: string]: TodoType };
   id: string;
 };
+//#endregion
 class Vector2d {
   y: number;
   x: number;
@@ -42,8 +43,8 @@ type Vec = { x: number; y: number };
 const vec = (pos1: Vec, pos2: Vec): Vector2d => {
   return new Vector2d(pos1, pos2);
 };
-//#endregion
-let rqq = (b: TodoType, lb: Tlb) => ({
+
+let centerPos = (b: TodoType, lb: Tlb) => ({
   ...b,
   x: b.x + b.dx + (lb.w ? lb.w / 2 : 0),
   y: b.y + b.dy + (lb.h ? lb.h / 2 : 0),
@@ -65,6 +66,33 @@ function srtx<T extends { x: number }>(a: T, b: T): [T, T] {
   }
 }
 class Line extends React.Component<P_Line> {
+  getBoxes = () => {
+    let b1 = centerPos(this.props.b1, this.props.localBox1);
+    let b2 = centerPos(this.props.b2, this.props.localBox2);
+    let b1i = this.getConnectedBoxes(b1, b2);
+    let b2i = this.getConnectedBoxes(b2, b1);
+    let n1 = { i: b1i, ...b1 };
+    let n2 = { i: b2i, ...b2 };
+    let [r, l] = srtx(n1, n2);
+    let [b, t] = srty(n1, n2);
+    let tl = {
+      x: l.x + l.i * this.gap,
+      y: t.y + t.h / 2
+    };
+    let br = {
+      x: r.x + r.i * this.gap,
+      y: b.y - b.h / 2
+    };
+    let bb = {
+      x: b.x + b.i * this.gap,
+      y: b.y - b.h / 2
+    };
+    let tt = {
+      x: t.x + t.i * this.gap,
+      y: t.y + t.h / 2
+    };
+    return { tl, br, bb, tt };
+  };
   getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
     let el = new Axjs(Object.values(this.props.linesRaw))
       .map(l => (l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : null))
@@ -94,7 +122,7 @@ class Line extends React.Component<P_Line> {
   };
   gap = 8;
   UpperLine = styled("div")(() => {
-    let { bb, tt } = this.tqqq();
+    let { bb, tt } = this.getBoxes();
     return {
       borderLeft: "1px dashed " + colors.noteBorder,
       height: (bb.y - tt.y) / 2,
@@ -105,35 +133,9 @@ class Line extends React.Component<P_Line> {
       width: 1
     };
   });
-  tqqq = () => {
-    let b1 = rqq(this.props.b1, this.props.localBox1);
-    let b2 = rqq(this.props.b2, this.props.localBox2);
-    let b1i = this.getConnectedBoxes(b1, b2);
-    let b2i = this.getConnectedBoxes(b2, b1);
-    let n1 = { i: b1i, ...b1 };
-    let n2 = { i: b2i, ...b2 };
-    let [r, l] = srtx(n1, n2);
-    let [b, t] = srty(n1, n2);
-    let tl = {
-      x: l.x + l.i * this.gap,
-      y: t.y + t.h / 2
-    };
-    let br = {
-      x: r.x + r.i * this.gap,
-      y: b.y - b.h / 2
-    };
-    let bb = {
-      x: b.x + b.i * this.gap,
-      y: b.y - b.h / 2
-    };
-    let tt = {
-      x: t.x + t.i * this.gap,
-      y: t.y + t.h / 2
-    };
-    return { tl, br, bb, tt };
-  };
+
   MiddleLine = styled("div")(() => {
-    let { tl, br, tt, bb } = this.tqqq();
+    let { tl, br, tt, bb } = this.getBoxes();
     return {
       borderTop: "1px dashed " + colors.noteBorder,
       height: 1,
@@ -145,7 +147,7 @@ class Line extends React.Component<P_Line> {
     };
   });
   LowerLine = styled("div")(() => {
-    let { tl, br, bb } = this.tqqq();
+    let { tl, br, bb } = this.getBoxes();
     return {
       borderLeft: "1px dashed " + colors.noteBorder,
       height: (br.y - tl.y) / 2,

@@ -26,7 +26,7 @@ export type TodoProps = {
   select: (id: string) => void;
   selected: boolean;
 };
-const renderNode = ({ node, attributes, children, isSelected }) => {
+const renderNode = ({ node, attributes, children, isSelected }: any) => {
   if (
     (node.text.startsWith("--") || node.text.startsWith("- - -")) &&
     !isSelected
@@ -65,7 +65,7 @@ type MeProps = {
 };
 
 class MyEditor extends React.Component<MeProps & BoxProps> {
-  editor: Editor;
+  editor?: typeof Editor;
   state = {
     value: Plain.deserialize(this.props.name),
     editing: false
@@ -85,19 +85,20 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     },
     esc: () => {
       this.props.select("");
-      this.editor.blur();
+      this.editor!.blur();
     }
   };
 
   componentDidMount() {
     console.log(this.props.localBox);
     if (this.props.localBox) {
-      this.editor.focus();
+      this.editor!.focus();
       setTimeout(() => {
         console.log(this.editor);
-        let htmlElement = ReactDOM.findDOMNode(this.editor) as HTMLElement;
+        let htmlElement = ReactDOM.findDOMNode(this
+          .editor! as any) as HTMLElement;
         htmlElement.focus();
-        this.editor.change(c => c.selectAll());
+        this.editor!.change((c: any) => c.selectAll());
       }, 5);
     }
     // this.extracted(this.props, false)
@@ -135,8 +136,10 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
             !(this.props.localBox && this.props.localBox.isNew)
           }
           onClick={this.props.onClick}
-          onKeyDown={e => (e.shiftKey && e.key === "Enter" ? false : null)}
-          ref={ref => (this.editor = ref)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) =>
+            e.shiftKey && e.key === "Enter" ? false : null
+          }
+          ref={(ref: any) => (this.editor = ref)}
           className={css({
             paddingTop: "1.3ch",
             paddingBottom: "1.2ch"
@@ -146,7 +149,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     );
   }
 
-  onChange = ({ value }) => {
+  onChange = ({ value }: any) => {
     this.setState({ value });
   };
 
@@ -166,7 +169,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
 }
 
 class Note extends React.Component<BoxProps & TodoProps> {
-  bs: HTMLDivElement | undefined;
+  bs?: Element;
 
   componentDidMount() {
     this.updateSize();
@@ -199,7 +202,7 @@ class Note extends React.Component<BoxProps & TodoProps> {
         data-box-id={this.props.todo.id}
         dragging={this.props.dragging}
         selected={this.props.selected}
-        innerRef={ref => (this.bs = ref)}
+        innerRef={(ref: Element) => (this.bs = ref)}
         onDoubleClick={(e: any) => e.stopPropagation()}
       >
         <MyEditor
@@ -229,7 +232,7 @@ class Note extends React.Component<BoxProps & TodoProps> {
     });
   };
 
-  onClick = e => {
+  onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     this.props.select(this.props.todo.id);
   };
@@ -251,7 +254,7 @@ class Note extends React.Component<BoxProps & TodoProps> {
     }
   };
 
-  onDragStart = e => {
+  onDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     this.props.onDragStart(e, this.props.todo);
   };

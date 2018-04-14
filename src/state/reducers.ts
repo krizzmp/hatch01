@@ -35,7 +35,7 @@ export type LocalNote = {
 type localStateType = {
   [id: string]: LocalNote;
 };
-const local = (s: localStateType = {}, action) => {
+const local = (s: localStateType = {}, action: any) => {
   if (isType(action, UpdateNoteSize)) {
     return R.mergeDeepRight(s, {
       [action.payload.id]: {
@@ -63,7 +63,7 @@ const local = (s: localStateType = {}, action) => {
 type canvasState = {
   selected: boolean;
 };
-const canvas = (s = { selected: "" }, action) => {
+const canvas = (s = { selected: "" }, action: any) => {
   if (isType(action, CreateNote)) {
     return {
       selected: action.payload.id

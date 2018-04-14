@@ -12,7 +12,7 @@ type MoveNoteProps = {
 };
 export const MoveNote = actionCreator<MoveNoteProps>("MOVE");
 
-export function* moveNote(firebase: any, action: Action<MoveNoteProps>) {
+export function moveNote(firebase: any, action: Action<MoveNoteProps>) {
   const { id, x, y, dx, dy, projectId } = action.payload;
   firebase.update(`${projectId}/todos/${id}`, {
     x: x + dx,
@@ -21,4 +21,4 @@ export function* moveNote(firebase: any, action: Action<MoveNoteProps>) {
     dy: 0
   });
 }
-export default firebase => takeEvery(MoveNote.type, moveNote, firebase);
+export default (firebase: any) => takeEvery(MoveNote.type, moveNote, firebase);
