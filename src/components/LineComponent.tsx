@@ -3,7 +3,8 @@ import { connect } from "react-redux";
 import styled from "react-emotion";
 import colors from "src/styles/colors";
 import { LineType } from "src/types";
-import { Axjs } from "src/axjs";
+import { Axjs } from "src/utils/axjs";
+import { vec } from "src/utils/Vector";
 //#region types
 export type TodoType = {
   id: string;
@@ -24,25 +25,6 @@ type P_Line = {
   id: string;
 };
 //#endregion
-class Vector2d {
-  y: number;
-  x: number;
-  constructor(a: Vec, b: Vec) {
-    this.x = a.x - b.x;
-    this.y = a.y - b.y;
-  }
-  magnitude() {
-    // noinspection JSSuspiciousNameCombination
-    return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
-  }
-  angle() {
-    return Math.atan2(this.y, this.x) * 180 / Math.PI;
-  }
-}
-type Vec = { x: number; y: number };
-const vec = (pos1: Vec, pos2: Vec): Vector2d => {
-  return new Vector2d(pos1, pos2);
-};
 
 let centerPos = (b: TodoType, lb: Tlb) => ({
   ...b,
@@ -66,7 +48,8 @@ function srtx<T extends { x: number }>(a: T, b: T): [T, T] {
   }
 }
 class Line extends React.Component<P_Line> {
-  getBoxes = () => {
+  private gap = 8;
+  private getBoxes = () => {
     let b1 = centerPos(this.props.b1, this.props.localBox1);
     let b2 = centerPos(this.props.b2, this.props.localBox2);
     let b1i = this.getConnectedBoxes(b1, b2);
@@ -93,7 +76,7 @@ class Line extends React.Component<P_Line> {
     };
     return { tl, br, bb, tt };
   };
-  getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
+  private getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
     let el = new Axjs(Object.values(this.props.linesRaw))
       .map(l => (l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : null))
       .notNil()
@@ -104,7 +87,7 @@ class Line extends React.Component<P_Line> {
           .map(p => {
             let ang = vec(p, box).angle();
             return {
-              angle: ang < 0 ? ang : ang * -1,
+              angle: ang > 0 ? ang : ang * -1,
               box: p
             };
           })
@@ -120,7 +103,16 @@ class Line extends React.Component<P_Line> {
       .head()!;
     return el.index - (el.count - 1) / 2;
   };
-  gap = 8;
+
+  render() {
+    return (
+      <>
+        <this.UpperLine />
+        <this.LowerLine />
+        <this.MiddleLine />
+      </>
+    );
+  }
   UpperLine = styled("div")(() => {
     let { bb, tt } = this.getBoxes();
     return {
@@ -158,15 +150,6 @@ class Line extends React.Component<P_Line> {
       width: 1
     };
   });
-  render() {
-    return (
-      <>
-        <this.UpperLine />
-        <this.LowerLine />
-        <this.MiddleLine />
-      </>
-    );
-  }
 }
 
 let en1 = connect((s: any, p: any) => ({
