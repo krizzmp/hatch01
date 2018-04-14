@@ -7,7 +7,7 @@ import { Canvas } from "src/components/CanvasComponent";
 import Line, { TodoType } from "src/components/LineComponent";
 import Note from "src/components/NoteComponent";
 import * as Actions from "src/state/actions/index";
-import { Axjs } from "src/axjs";
+import { Axjs } from "src/utils/axjs";
 
 let cuid = require("cuid");
 

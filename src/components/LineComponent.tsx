@@ -58,23 +58,23 @@ class Line extends React.Component<P_Line> {
     let n2 = { i: b2i, ...b2 };
     let [r, l] = srtx(n1, n2);
     let [b, t] = srty(n1, n2);
-    let tl = {
+    let left = {
       x: l.x + l.i * this.gap,
       y: t.y + t.h / 2
     };
-    let br = {
+    let right = {
       x: r.x + r.i * this.gap,
       y: b.y - b.h / 2
     };
-    let bb = {
+    let bottom = {
       x: b.x + b.i * this.gap,
       y: b.y - b.h / 2
     };
-    let tt = {
+    let top = {
       x: t.x + t.i * this.gap,
       y: t.y + t.h / 2
     };
-    return { tl, br, bb, tt };
+    return { left, right, bottom, top };
   };
   private getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
     let el = new Axjs(Object.values(this.props.linesRaw))
@@ -114,12 +114,12 @@ class Line extends React.Component<P_Line> {
     );
   }
   UpperLine = styled("div")(() => {
-    let { bb, tt } = this.getBoxes();
+    let { top, bottom } = this.getBoxes();
     return {
       borderLeft: "1px dashed " + colors.noteBorder,
-      height: (bb.y - tt.y) / 2,
-      left: tt.x,
-      top: tt.y,
+      height: (bottom.y - top.y) / 2,
+      left: top.x,
+      top: top.y,
       position: "absolute",
       display: "inline-block",
       width: 1
@@ -127,24 +127,24 @@ class Line extends React.Component<P_Line> {
   });
 
   MiddleLine = styled("div")(() => {
-    let { tl, br, tt, bb } = this.getBoxes();
+    let { left, right, top, bottom } = this.getBoxes();
     return {
       borderTop: "1px dashed " + colors.noteBorder,
       height: 1,
-      left: tl.x,
-      top: tt.y + (bb.y - tt.y) / 2,
+      left: left.x,
+      top: top.y + (bottom.y - top.y) / 2,
       position: "absolute",
       display: "inline-block",
-      width: br.x - tl.x
+      width: right.x - left.x
     };
   });
   LowerLine = styled("div")(() => {
-    let { tl, br, bb } = this.getBoxes();
+    let { top, bottom } = this.getBoxes();
     return {
       borderLeft: "1px dashed " + colors.noteBorder,
-      height: (br.y - tl.y) / 2,
-      left: bb.x,
-      top: tl.y + (br.y - tl.y) / 2,
+      height: (bottom.y - top.y) / 2,
+      left: bottom.x,
+      top: top.y + (bottom.y - top.y) / 2,
       position: "absolute",
       display: "inline-block",
       width: 1
