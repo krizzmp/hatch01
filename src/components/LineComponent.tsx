@@ -4,8 +4,9 @@ import { LineStyle } from "src/styles/LineStyle";
 import styled from "react-emotion";
 import colors from "src/styles/colors";
 import { LineType } from "src/types";
-import * as R from "ramda";
-
+// import * as R from "ramda";
+import { Axjs } from "src/axjs";
+//#region s
 export type TodoType = {
   id: string;
   x: number;
@@ -37,20 +38,31 @@ class LineOld extends React.Component<P_Line> {
     );
   }
 }
+//#endregion
+{
+  // h
+}
+//#region hellp
+class Vector2d {
+  y: number;
+  x: number;
+  constructor(a: Vec, b: Vec) {
+    this.x = a.x - b.x;
+    this.y = a.y - b.y;
+  }
+  magnitude() {
+    // noinspection JSSuspiciousNameCombination
+    return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+  }
+  angle() {
+    return Math.atan2(this.y, this.x) * 180 / Math.PI;
+  }
+}
 type Vec = { x: number; y: number };
-const vec = (pos1: Vec, pos2: Vec): Vec => {
-  return {
-    x: pos1.x - pos2.x,
-    y: pos1.y - pos2.y
-  };
+const vec = (pos1: Vec, pos2: Vec): Vector2d => {
+  return new Vector2d(pos1, pos2);
 };
-let Magnitude = function(v: Vec) {
-  // noinspection JSSuspiciousNameCombination
-  return Math.sqrt(Math.pow(v.x, 2) + Math.pow(v.y, 2));
-};
-let angle = (v: Vec) => {
-  return Math.atan2(v.y, v.x) * 180 / Math.PI;
-};
+//#endregion
 let r = (b, lb) => ({
   ...b,
   x: b.x + b.dx + (lb.w ? lb.w / 2 : 0),
@@ -71,7 +83,8 @@ const srtx = (a, b) => {
     return [a, b];
   }
 };
-const LineStyle2 = styled<any, "div">("div")(({ b1, b2, t }) => {
+const gap = 8;
+const UpperLine = styled<any, "div">("div")(({ b1, b2, t }) => {
   let [p1, p2] = srty(b1, b2);
   let v = vec(p1, p2);
 
@@ -79,7 +92,7 @@ const LineStyle2 = styled<any, "div">("div")(({ b1, b2, t }) => {
   return {
     borderLeft: "1px dashed " + colors.noteBorder,
     height: v.y / 2,
-    left: p2.x + t * 10,
+    left: p2.x + t * gap,
     top: p2.y,
     position: "absolute",
     display: "inline-block",
@@ -87,39 +100,39 @@ const LineStyle2 = styled<any, "div">("div")(({ b1, b2, t }) => {
   };
 });
 
-const LineStyle3 = styled<any, "div">("div")(({ b1, b2, t }) => {
+const LowerLine = styled<any, "div">("div")(({ b1, b2, t }) => {
   let [p1, p2] = srty(b1, b2);
   let v = vec(p1, p2);
   return {
     borderLeft: "1px dashed " + colors.noteBorder,
     height: v.y / 2,
-    left: p1.x + t * 10,
+    left: p1.x + t * gap,
     top: p2.y + v.y / 2,
     position: "absolute",
     display: "inline-block",
     width: 1
   };
 });
-const LineStyle4 = styled<any, "div">("div")(({ b1, b2, t1, t2 }) => {
+const MiddleLine = styled<any, "div">("div")(({ b1, b2, t1, t2 }) => {
   let [_pr, _pl] = srtx(b1, b2);
   let pr = Object.assign({}, _pr);
   let pl = Object.assign({}, _pl);
   let tl;
   if (b1.y < b2.y) {
     if (b1.x < b2.x) {
-      pl.x += t2 * 10; // works
-      pr.x += t1 * 10;
+      pl.x += t2 * gap; // works
+      pr.x += t1 * gap;
     } else {
-      pr.x += t2 * 10; // works
-      pl.x += t1 * 10; // works
+      pr.x += t2 * gap; // works
+      pl.x += t1 * gap; // works
     }
   } else {
     if (b1.x > b2.x) {
-      pr.x += t1 * 10; // perfect
-      pl.x += t2 * 10;
+      pl.x += t2 * gap;
+      pr.x += t1 * gap; // perfect
     } else {
-      pl.x += t1 * 10; // works
-      pr.x += t2 * 10;
+      pr.x += t2 * gap;
+      pl.x += t1 * gap; // works
     }
   }
   let v = vec(pr, pl);
@@ -133,89 +146,57 @@ const LineStyle4 = styled<any, "div">("div")(({ b1, b2, t1, t2 }) => {
     width: v.x
   };
 });
-function getConnectedLines(
-  lines: { [id: string]: LineType },
-  lineProps: P_Line,
-  notes: { [id: string]: TodoType }
-) {
-  let b1 = lineProps.b1.id;
-  let isConnected = line => line.b1 === b1 || line.b2 === b1;
-
-  let getLineId = R.pipe(
-    R.defaultTo({}),
-    R.filter(isConnected),
-    R.values,
-
-    R.sortBy(
-      R.pipe(
-        (l: LineType) => (l.b1 === b1 ? l.b2 : l.b1),
-        bid => notes[bid],
-        n => n.x
-      )
-    ),
-    R.mapAccum((a, x) => [a + 1, [a, x]], 0),
-    a => a[1]
-  );
-
-  return getLineId(lines);
-}
 
 class Line extends React.Component<P_Line> {
-  getConnectedBoxes = (box: TodoType) => {
-    const top = l => {
-      return srty(l.b1, l.b2)[0];
-    };
-    const bottom = l => {
-      return srty(l.b1, l.b2)[1];
-    };
-    let d = R.pipe(
-      R.mapObjIndexed(
-        (l: LineType): string | undefined =>
-          l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : undefined
-      ),
-
-      R.filter<string | undefined>(id => (id === undefined ? false : true)),
-      R.values,
-      R.map(id => this.props.todosRaw[id!]),
-      R.sortBy((b: TodoType) => b.x)
-    );
-    return d(this.props.linesRaw);
+  getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
+    let el = new Axjs(Object.values(this.props.linesRaw))
+      .map(l => (l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : null))
+      .notNil()
+      .map(id => this.props.todosRaw[id!])
+      .partition(b => b.y < box.y)
+      .map(o =>
+        o
+          .map(p => {
+            let ang = vec(p, box).angle();
+            return {
+              angle: ang < 0 ? ang : ang * -1,
+              box: p
+            };
+          })
+          .sortBy(a => a.angle)
+          .map((x, i, arr) => ({
+            index: i,
+            el: x.box,
+            count: arr!.length
+          }))
+          .find(x => x.el.id === otherBox.id)
+      )
+      .notNil()
+      .head()!;
+    return el.index - (el.count - 1) / 2;
   };
   fn = () => {
     let [bb, bt] = srty(this.props.b1, this.props.b2);
-    let l = this.getConnectedBoxes(bb);
-
-    let y = R.indexOf(bt, l) - (l.length - 1) / 2;
-    if (l.length === 1 || R.indexOf(bt, l) === -1) {
-      y = 0;
-    }
-
-    return y;
+    return this.getConnectedBoxes(bb, bt);
   };
   fn2 = () => {
     let [bb, bt] = srty(this.props.b1, this.props.b2);
-    let l = this.getConnectedBoxes(bt);
-
-    let y = R.indexOf(bb, l) - (l.length - 1) / 2;
-    if (l.length === 1 || R.indexOf(bb, l) === -1) {
-      y = 0;
-    }
-    return y;
+    return this.getConnectedBoxes(bt, bb);
   };
   render() {
     return (
       <>
-        <LineStyle2
+        <UpperLine
           b1={r(this.props.b1, this.props.localBox1)}
           b2={r(this.props.b2, this.props.localBox2)}
           t={this.fn2()}
         />
-        <LineStyle3
+        <LowerLine
           b1={r(this.props.b1, this.props.localBox1)}
           b2={r(this.props.b2, this.props.localBox2)}
           t={this.fn()}
         />
-        <LineStyle4
+        <MiddleLine
           b1={r(this.props.b1, this.props.localBox1)}
           b2={r(this.props.b2, this.props.localBox2)}
           t1={this.fn()}

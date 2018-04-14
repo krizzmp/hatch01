@@ -45,6 +45,7 @@
     "@types/recompose": "^0.24.4",
     "prettier": "1.11.1",
     "react-app-rewired": "^1.4.1",
+    "typescript": "^2.8.1",
     "why-did-you-update": "^0.1.0"
   }
 }
