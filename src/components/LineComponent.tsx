@@ -1,10 +1,8 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { LineStyle } from "src/styles/LineStyle";
 import styled from "react-emotion";
 import colors from "src/styles/colors";
 import { LineType } from "src/types";
-// import * as R from "ramda";
 import { Axjs } from "src/axjs";
 //#region s
 export type TodoType = {
@@ -25,24 +23,6 @@ type P_Line = {
   todosRaw: { [id: string]: TodoType };
   id: string;
 };
-
-class LineOld extends React.Component<P_Line> {
-  render() {
-    return (
-      <LineStyle
-        b1={this.props.b1}
-        b2={this.props.b2}
-        localBox1={this.props.localBox1}
-        localBox2={this.props.localBox2}
-      />
-    );
-  }
-}
-//#endregion
-{
-  // h
-}
-//#region hellp
 class Vector2d {
   y: number;
   x: number;
@@ -63,90 +43,27 @@ const vec = (pos1: Vec, pos2: Vec): Vector2d => {
   return new Vector2d(pos1, pos2);
 };
 //#endregion
-let r = (b, lb) => ({
+let rqq = (b: TodoType, lb: Tlb) => ({
   ...b,
   x: b.x + b.dx + (lb.w ? lb.w / 2 : 0),
-  y: b.y + b.dy + (lb.h ? lb.h / 2 : 0)
+  y: b.y + b.dy + (lb.h ? lb.h / 2 : 0),
+  ...lb
 });
 
-const srty = (a, b) => {
+function srty<T extends { y: number }>(a: T, b: T): [T, T] {
   if (a.y < b.y) {
     return [b, a];
   } else {
     return [a, b];
   }
-};
-const srtx = (a, b) => {
+}
+function srtx<T extends { x: number }>(a: T, b: T): [T, T] {
   if (a.x < b.x) {
     return [b, a];
   } else {
     return [a, b];
   }
-};
-const gap = 8;
-const UpperLine = styled<any, "div">("div")(({ b1, b2, t }) => {
-  let [p1, p2] = srty(b1, b2);
-  let v = vec(p1, p2);
-
-  let colorsnoteBorder = p2.id === b1.id ? "red" : "blue";
-  return {
-    borderLeft: "1px dashed " + colors.noteBorder,
-    height: v.y / 2,
-    left: p2.x + t * gap,
-    top: p2.y,
-    position: "absolute",
-    display: "inline-block",
-    width: 1
-  };
-});
-
-const LowerLine = styled<any, "div">("div")(({ b1, b2, t }) => {
-  let [p1, p2] = srty(b1, b2);
-  let v = vec(p1, p2);
-  return {
-    borderLeft: "1px dashed " + colors.noteBorder,
-    height: v.y / 2,
-    left: p1.x + t * gap,
-    top: p2.y + v.y / 2,
-    position: "absolute",
-    display: "inline-block",
-    width: 1
-  };
-});
-const MiddleLine = styled<any, "div">("div")(({ b1, b2, t1, t2 }) => {
-  let [_pr, _pl] = srtx(b1, b2);
-  let pr = Object.assign({}, _pr);
-  let pl = Object.assign({}, _pl);
-  let tl;
-  if (b1.y < b2.y) {
-    if (b1.x < b2.x) {
-      pl.x += t2 * gap; // works
-      pr.x += t1 * gap;
-    } else {
-      pr.x += t2 * gap; // works
-      pl.x += t1 * gap; // works
-    }
-  } else {
-    if (b1.x > b2.x) {
-      pl.x += t2 * gap;
-      pr.x += t1 * gap; // perfect
-    } else {
-      pr.x += t2 * gap;
-      pl.x += t1 * gap; // works
-    }
-  }
-  let v = vec(pr, pl);
-  return {
-    borderTop: "1px dashed " + colors.noteBorder,
-    height: 1,
-    left: pl.x,
-    top: pl.y + v.y / 2,
-    position: "absolute",
-    display: "inline-block",
-    width: v.x
-  };
-});
-
+}
 class Line extends React.Component<P_Line> {
   getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
     let el = new Axjs(Object.values(this.props.linesRaw))
@@ -175,33 +92,76 @@ class Line extends React.Component<P_Line> {
       .head()!;
     return el.index - (el.count - 1) / 2;
   };
-  fn = () => {
-    let [bb, bt] = srty(this.props.b1, this.props.b2);
-    return this.getConnectedBoxes(bb, bt);
+  gap = 8;
+  UpperLine = styled("div")(() => {
+    let { bb, tt } = this.tqqq();
+    return {
+      borderLeft: "1px dashed " + colors.noteBorder,
+      height: (bb.y - tt.y) / 2,
+      left: tt.x,
+      top: tt.y,
+      position: "absolute",
+      display: "inline-block",
+      width: 1
+    };
+  });
+  tqqq = () => {
+    let b1 = rqq(this.props.b1, this.props.localBox1);
+    let b2 = rqq(this.props.b2, this.props.localBox2);
+    let b1i = this.getConnectedBoxes(b1, b2);
+    let b2i = this.getConnectedBoxes(b2, b1);
+    let n1 = { i: b1i, ...b1 };
+    let n2 = { i: b2i, ...b2 };
+    let [r, l] = srtx(n1, n2);
+    let [b, t] = srty(n1, n2);
+    let tl = {
+      x: l.x + l.i * this.gap,
+      y: t.y + t.h / 2
+    };
+    let br = {
+      x: r.x + r.i * this.gap,
+      y: b.y - b.h / 2
+    };
+    let bb = {
+      x: b.x + b.i * this.gap,
+      y: b.y - b.h / 2
+    };
+    let tt = {
+      x: t.x + t.i * this.gap,
+      y: t.y + t.h / 2
+    };
+    return { tl, br, bb, tt };
   };
-  fn2 = () => {
-    let [bb, bt] = srty(this.props.b1, this.props.b2);
-    return this.getConnectedBoxes(bt, bb);
-  };
+  MiddleLine = styled("div")(() => {
+    let { tl, br, tt, bb } = this.tqqq();
+    return {
+      borderTop: "1px dashed " + colors.noteBorder,
+      height: 1,
+      left: tl.x,
+      top: tt.y + (bb.y - tt.y) / 2,
+      position: "absolute",
+      display: "inline-block",
+      width: br.x - tl.x
+    };
+  });
+  LowerLine = styled("div")(() => {
+    let { tl, br, bb } = this.tqqq();
+    return {
+      borderLeft: "1px dashed " + colors.noteBorder,
+      height: (br.y - tl.y) / 2,
+      left: bb.x,
+      top: tl.y + (br.y - tl.y) / 2,
+      position: "absolute",
+      display: "inline-block",
+      width: 1
+    };
+  });
   render() {
     return (
       <>
-        <UpperLine
-          b1={r(this.props.b1, this.props.localBox1)}
-          b2={r(this.props.b2, this.props.localBox2)}
-          t={this.fn2()}
-        />
-        <LowerLine
-          b1={r(this.props.b1, this.props.localBox1)}
-          b2={r(this.props.b2, this.props.localBox2)}
-          t={this.fn()}
-        />
-        <MiddleLine
-          b1={r(this.props.b1, this.props.localBox1)}
-          b2={r(this.props.b2, this.props.localBox2)}
-          t1={this.fn()}
-          t2={this.fn2()}
-        />
+        <this.UpperLine />
+        <this.LowerLine />
+        <this.MiddleLine />
       </>
     );
   }
