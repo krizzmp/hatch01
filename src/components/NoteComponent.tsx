@@ -90,7 +90,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
   };
 
   componentDidMount() {
-    console.log(this.props.localBox);
+    console.log(this.props);
     if (this.props.localBox) {
       this.editor!.focus();
       setTimeout(() => {

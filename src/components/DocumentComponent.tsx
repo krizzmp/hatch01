@@ -1,4 +1,4 @@
-import * as R from "ramda";
+import { Dictionary } from "ramda";
 import * as React from "react";
 import { bindActionCreators } from "redux";
 import { fbConnect } from "src/utils";
@@ -8,29 +8,22 @@ import Line, { TodoType } from "src/components/LineComponent";
 import Note from "src/components/NoteComponent";
 import * as Actions from "src/state/actions/index";
 import { Axjs } from "src/utils/axjs";
+import { RouteComponentProps } from "react-router";
 
 let cuid = require("cuid");
-
-function getConnectedLine(
-  lines: { [id: string]: LineType },
-  b1: string,
-  b2: string
-): LineType {
+function getConnectedLine(lines: Dictionary<LineType>, b1: string, b2: string) {
   let isConnected = (line: LineType) =>
     (line.b1 === b1 && line.b2 === b2) || (line.b1 === b2 && line.b2 === b1);
-
-  // return getLineId(Object.values(lines));
   let g = new Axjs(Object.values(lines)).filter(isConnected).head();
   return g!;
 }
 
 type AppProps = {
-  todosRaw: { [id: string]: TodoType };
-  linesRaw: { [id: string]: LineType };
+  todosRaw: Dictionary<TodoType>;
+  linesRaw: Dictionary<LineType>;
   selected: string;
   actions: typeof Actions;
-  match: any;
-};
+} & RouteComponentProps<{ id: string }>;
 
 class App extends React.Component<AppProps> {
   $center?: Element;
@@ -38,34 +31,35 @@ class App extends React.Component<AppProps> {
     dragging: undefined as TodoType | undefined,
     draggingInitPos: undefined as { x: number; y: number } | undefined
   };
-  Lines = R.pipe(
-    R.values,
-    R.map((line: LineType) => (
-      <Line
-        key={line.id}
-        id={line.id}
-        b1={this.props.todosRaw[line.b1]}
-        b2={this.props.todosRaw[line.b2]}
-        linesRaw={this.props.linesRaw}
-        todosRaw={this.props.todosRaw}
-      />
-    ))
-  );
-
-  Notes = R.pipe(
-    R.values,
-    R.map((todo: TodoType) => (
-      <Note
-        key={todo.id}
-        todo={todo}
-        onDragStart={this.dragStart}
-        dragging={!!this.state.dragging && todo.id === this.state.dragging.id}
-        selected={this.props.selected === todo.id}
-        select={this.select}
-        projectId={this.props.match.params.id}
-      />
-    ))
-  );
+  Lines = () => {
+    return new Axjs(Object.values(this.props.linesRaw))
+      .map(line => (
+        <Line
+          key={line.id}
+          id={line.id}
+          b1={this.props.todosRaw[line.b1]}
+          b2={this.props.todosRaw[line.b2]}
+          linesRaw={this.props.linesRaw}
+          todosRaw={this.props.todosRaw}
+        />
+      ))
+      .asArray();
+  };
+  Notes = () => {
+    return new Axjs(Object.values(this.props.todosRaw))
+      .map(todo => (
+        <Note
+          key={todo.id}
+          todo={todo}
+          onDragStart={this.dragStart}
+          dragging={!!this.state.dragging && todo.id === this.state.dragging.id}
+          selected={this.props.selected === todo.id}
+          select={this.select}
+          projectId={this.props.match.params.id}
+        />
+      ))
+      .asArray();
+  };
 
   dragStart = (e: React.DragEvent<HTMLDivElement>, todo: TodoType) => {
     this.setState({
@@ -136,8 +130,8 @@ class App extends React.Component<AppProps> {
           onMouseUp={this.onDragEnd}
           centerRef={ref => (this.$center = ref)}
         >
-          {this.Lines(this.props.linesRaw)}
-          {this.Notes(this.props.todosRaw)}
+          {this.Lines()}
+          {this.Notes()}
         </Canvas>
       </React.Fragment>
     );

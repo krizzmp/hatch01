@@ -27,4 +27,7 @@ export class Axjs<T> {
     const xs = R.filter(R.complement(R.isNil), this.arr) as NonNullable<T>[];
     return new Axjs(xs);
   }
+  asArray(): T[] {
+    return this.arr;
+  }
 }
