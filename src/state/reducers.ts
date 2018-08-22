@@ -78,7 +78,7 @@ const canvas = (s = { selected: "" }, action: any) => {
 };
 export type RootState = {
   local: localStateType;
-  firebase: any;
+  firebase: { auth: { uid: string }; profile: any };
   canvas: canvasState;
 };
 const rootReducer = combineReducers({

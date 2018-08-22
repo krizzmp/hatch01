@@ -3,8 +3,11 @@ import { connect } from "react-redux";
 import styled from "react-emotion";
 import colors from "src/styles/colors";
 import { LineType } from "src/types";
-import { Axjs } from "src/utils/axjs";
 import { vec } from "src/utils/Vector";
+import { RootState } from "src/state/reducers";
+import { Dictionary } from "ramda";
+import Ix from "ix";
+// import { ofValues } from "ix/iterable/ofvalues";
 //#region types
 export type TodoType = {
   id: string;
@@ -18,11 +21,11 @@ type Tlb = { w: number; h: number };
 type P_Line = {
   b1: TodoType;
   b2: TodoType;
+  id: string;
+  linesRaw: Dictionary<LineType>;
+  todosRaw: Dictionary<TodoType>;
   localBox1: Tlb;
   localBox2: Tlb;
-  linesRaw: { [id: string]: LineType };
-  todosRaw: { [id: string]: TodoType };
-  id: string;
 };
 //#endregion
 
@@ -77,30 +80,55 @@ class Line extends React.Component<P_Line> {
     return { left, right, bottom, top };
   };
   private getConnectedBoxes = (box: TodoType, otherBox: TodoType) => {
-    let el = new Axjs(Object.values(this.props.linesRaw))
-      .map(l => (l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : null))
-      .notNil()
-      .map(id => this.props.todosRaw[id!])
-      .partition(b => b.y < box.y)
-      .map(o =>
+    let el = Ix.Iterable.from(Object.values(this.props.linesRaw))
+      .map((l) => (l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : null))
+      .filter(notNull)
+      .map((id) => this.props.todosRaw[id])
+      .partition((b) => b.y < box.y)
+      .map((o) =>
         o
-          .map(p => {
+          .map((p) => {
             let ang = vec(p, box).angle();
             return {
               angle: ang > 0 ? ang : ang * -1,
               box: p
             };
           })
-          .sortBy(a => a.angle)
-          .map((x, i, arr) => ({
+          .orderBy((a) => a.angle)
+          .map((x, i) => ({
             index: i,
             el: x.box,
-            count: arr!.length
+            count: o.count()
           }))
-          .find(x => x.el.id === otherBox.id)
+          .find((x) => x.el.id === otherBox.id)
       )
-      .notNil()
-      .head()!;
+      .filter(notNull)[0];
+    //#region
+    // let el = new Axjs(Object.values(this.props.linesRaw))
+    //   .map((l) => (l.b1 === box.id ? l.b2 : l.b2 === box.id ? l.b1 : null))
+    //   .notNil()
+    //   .map((id) => this.props.todosRaw[id!])
+    //   .partition((b) => b.y < box.y)
+    //   .map((o) =>
+    //     o
+    //       .map((p) => {
+    //         let ang = vec(p, box).angle();
+    //         return {
+    //           angle: ang > 0 ? ang : ang * -1,
+    //           box: p
+    //         };
+    //       })
+    //       .sortBy((a) => a.angle)
+    //       .map((x, i, arr) => ({
+    //         index: i,
+    //         el: x.box,
+    //         count: arr!.length
+    //       }))
+    //       .find((x) => x.el.id === otherBox.id)
+    //   )
+    //   .notNil()
+    //   .head()!;
+    //#endregion
     return el.index - (el.count - 1) / 2;
   };
 
@@ -152,8 +180,22 @@ class Line extends React.Component<P_Line> {
   });
 }
 
-let en1 = connect((s: any, p: any) => ({
-  localBox1: s.local[p.b1.id],
-  localBox2: s.local[p.b2.id]
-}));
-export default en1(Line);
+let en1 = connect(
+  (
+    s: RootState,
+    p: {
+      b1: TodoType;
+      b2: TodoType;
+      id: string;
+      linesRaw: Dictionary<LineType>;
+      todosRaw: Dictionary<TodoType>;
+    }
+  ) => ({
+    localBox1: s.local[p.b1.id],
+    localBox2: s.local[p.b2.id]
+  })
+);
+export default en1(Line as any);
+function notNull<T>(cat: T): cat is Exclude<typeof cat, undefined | null> {
+  return cat !== null && cat !== undefined;
+}

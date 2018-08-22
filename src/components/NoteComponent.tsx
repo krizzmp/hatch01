@@ -12,7 +12,7 @@ import { LocalNote } from "src/state/reducers";
 import {
   DefaultText,
   InnerDivider,
-  OuterDivider
+  OuterDivider,
 } from "src/styles/EditorStyle";
 import { TodoStyle } from "src/styles/TodoStyle";
 import * as ReactDOM from "react-dom";
@@ -68,14 +68,14 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
   editor?: typeof Editor;
   state = {
     value: Plain.deserialize(this.props.name),
-    editing: false
+    editing: false,
   };
   handlers = {
     remove: () => {
       if (!this.state.editing) {
         this.props.actions.RemoveNote({
           id: this.props.id,
-          projectId: this.props.projectId
+          projectId: this.props.projectId,
         });
       }
     },
@@ -86,11 +86,11 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     esc: () => {
       this.props.select("");
       this.editor!.blur();
-    }
+    },
   };
 
   componentDidMount() {
-    console.log(this.props);
+    // console.log(this.props);
     if (this.props.localBox) {
       this.editor!.focus();
       setTimeout(() => {
@@ -101,7 +101,6 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
         this.editor!.change((c: any) => c.selectAll());
       }, 5);
     }
-    // this.extracted(this.props, false)
   }
 
   componentWillReceiveProps(nextProps: MeProps) {
@@ -142,7 +141,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
           ref={(ref: any) => (this.editor = ref)}
           className={css({
             paddingTop: "1.3ch",
-            paddingBottom: "1.2ch"
+            paddingBottom: "1.2ch",
           })}
         />
       </HotKeys>
@@ -158,7 +157,7 @@ class MyEditor extends React.Component<MeProps & BoxProps> {
     this.props.actions.UpdateNoteText({
       id: this.props.id,
       name,
-      projectId: this.props.projectId
+      projectId: this.props.projectId,
     });
     this.setState({ editing: false });
   };
@@ -228,7 +227,7 @@ class Note extends React.Component<BoxProps & TodoProps> {
       id: cuid(),
       x: this.props.todo.x,
       y: this.props.todo.y + this.props.localBox!.h + margin,
-      projectId
+      projectId,
     });
   };
 
@@ -240,16 +239,15 @@ class Note extends React.Component<BoxProps & TodoProps> {
   updateSize = () => {
     const { width, height } = this.bs!.getBoundingClientRect();
 
-    if (
-      R.anyPass([
-        R.complement(R.pathEq(["localBox", "w"], width)),
-        R.complement(R.pathEq(["localBox", "h"], width))
-      ])(this.props)
-    ) {
+    const shouldUpdateSize = R.anyPass([
+      R.complement(R.pathEq(["localBox", "w"], width)),
+      R.complement(R.pathEq(["localBox", "h"], width)),
+    ])(this.props);
+    if (shouldUpdateSize) {
       this.props.actions.UpdateNoteSize({
         id: this.props.todo.id,
         h: height,
-        w: width
+        w: width,
       });
     }
   };
@@ -262,10 +260,10 @@ class Note extends React.Component<BoxProps & TodoProps> {
 
 const enhancer = connect(
   (s: any, p: any) => ({
-    localBox: s.local[p.todo.id]
+    localBox: s.local[p.todo.id],
   }),
-  dispatch => ({
-    actions: bindActionCreators(Actions, dispatch)
-  })
+  (dispatch) => ({
+    actions: bindActionCreators(Actions, dispatch),
+  }),
 );
 export default enhancer(Note);

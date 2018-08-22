@@ -1,7 +1,7 @@
 import * as React from "react";
 import { withFirebase } from "react-redux-firebase";
 import { Link } from "react-router-dom";
-
+import Documents from "./Documents";
 class Home extends React.Component<{ firebase: any }> {
   render() {
     return (
@@ -10,6 +10,7 @@ class Home extends React.Component<{ firebase: any }> {
         <p>Hatch is an intuitive diagramming tool.</p>
         <button onClick={this.login}>login</button>
         <Link to="/app">Open Default Document</Link>
+        <Documents />
       </div>
     );
   }

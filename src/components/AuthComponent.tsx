@@ -1,6 +1,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 import { withRouter, RouteComponentProps } from "react-router-dom";
+import { RootState } from "src/state/reducers";
 
 type Props = {
   authExists: boolean;
@@ -16,7 +17,6 @@ class ProtectedPage extends React.Component<Props> {
     return <React.Fragment>{this.props.children}</React.Fragment>;
   }
 }
-type f = { firebase: { auth: { uid: string } } };
-export default connect(({ firebase: { auth } }: f) => ({
+export default connect(({ firebase: { auth } }: RootState) => ({
   authExists: !!auth && !!auth.uid
 }))(withRouter(ProtectedPage));
